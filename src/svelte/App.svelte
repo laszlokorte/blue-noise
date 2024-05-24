@@ -6,8 +6,7 @@
 	import { atom, view, read, failableView } from "./svatom.svelte.js";
 	import { forcePlain } from "./contenteditable.js";
 	import { lerp, clamp, PHI } from "./utils.js";
-	import recordUrl from "/bluenoise-steps/recording.json?url";
-	import videoUrl from "/p01-s03-after-swap.mp4?url";
+	import recordUrl from "/steps/recording.json?url";
 
 	const loadedRecording = atom(null);
 	const focus = atom({});
@@ -21,11 +20,19 @@
 	});
 
 	function getImageUrl(phase, step, name) {
-		return `./bluenoise-steps/p0${phase}-s0${step}-${name}.png`;
+		const u = new URL(
+			`../../public/steps/p0${phase}-s0${step}-${name}.png`,
+			import.meta.url,
+		);
+		return u.href;
 	}
 
 	function getVideoUrl(phase, step, name) {
-		return `./p0${phase}-s0${step}-${name}.mp4`;
+		const u = new URL(
+			`../../public/steps/p0${phase}-s0${step}-${name}.mp4`,
+			import.meta.url,
+		);
+		return u.href;
 	}
 
 	function unravel(i, w, h) {
@@ -39,14 +46,43 @@
 		"1": {
 			name: "Phase 1",
 			intro: "This phase is the only point at which the algorithm is non-deterministic by generating white noise.",
+			code: `shape = (size, size)
+ranks = np.zeros(shape)
+
+initial_white_noise = np.random.rand(size, size)
+placed_pixels = initial_white_noise >= (1-initial_ratio)
+count_placed = np.sum(placed_pixels)
+count_remaining = placed_pixels.size - count_placed`,
+			iter_code: `prev_swap = None
+
+# Phase 1: Place intial
+while True:
+    blurred = gaussian(placed_pixels)
+    densest = (blurred * placed_pixels).argmax()
+    voidest = (blurred + placed_pixels).argmin()
+
+    if prev_swap == (voidest, densest):
+        break
+    if densest == voidest:
+        break
+
+    densest_coord = np.unravel_index(densest, shape)
+    voidest_coord = np.unravel_index(voidest, shape)
+
+    placed_pixels[densest_coord] = False
+    placed_pixels[voidest_coord] = True
+
+    prev_swap = (densest, voidest)`,
 			start: [
 				{
 					name: "initial_white_noise",
+					varname: "initial_white_noise",
 					step: 1,
 					comment: "Initial Uniform White Noise",
 				},
 				{
 					name: "initial_ratio_white",
+					varname: "placed_pixels",
 					step: 2,
 					comment:
 						"threshold: all values below 0.9 to 0, all others to 1",
@@ -55,23 +91,27 @@
 			iter: [
 				{
 					name: "before-swap",
+					varname: "placed_pixels",
 					step: 3,
 					markers: [],
 					comment: "binary image at the begin of the iteration",
 				},
 				{
 					name: "blurred",
+					varname: "blurred",
 					step: 3,
 					markers: [],
 					comment: "binary image gets blurred via guassian",
 				},
 				{
 					name: "blurred_dense_masked",
+					varname: "blurred * placed_pixels",
 					step: 3,
 					markers: [
 						{
 							key: "densest",
-							color: "cyan",
+							color: "magenta",
+							varname: "densest",
 						},
 					],
 					comment:
@@ -79,11 +119,13 @@
 				},
 				{
 					name: "blurred_voidest_offset",
+					varname: "blurred + placed_pixels",
 					step: 3,
 					markers: [
 						{
 							key: "voidest",
-							color: "cyan",
+							color: "magenta",
+							varname: "voidest",
 						},
 					],
 					comment:
@@ -91,15 +133,18 @@
 				},
 				{
 					name: "after-swap",
+					varname: "placed_pixels",
 					step: 3,
 					markers: [
 						{
 							key: "densest",
 							color: "#ff3333",
+							varname: "densest",
 						},
 						{
 							key: "voidest",
-							color: "lightgreen",
+							color: "#aaffaa",
+							varname: "voidest",
 						},
 					],
 					comment: "darkest and brightest pixels are swapped",
@@ -109,33 +154,46 @@
 		"2": {
 			name: "Phase 2",
 			intro: "The goal of this phase is to assign distinct intensitiy value to all of the already placed pixels. Pixels that are close together must get most different values. This is achieved to iterated through the pixels from densest to sparsest region.",
+			code: `placed_but_not_ranked = placed_pixels.copy()`,
 			start: [
 				{
 					name: "initial",
+					varname: "placed_pixels",
 					step: 0,
 					comment: "Initial binary mask of already placed pixels",
 				},
 			],
+			iter_code: `for rank in range(count_placed, 0, -1):
+	blurred = gaussian(placed_but_not_ranked)
+	densest = (blurred * placed_but_not_ranked).argmax()
+	densest_coord = np.unravel_index(densest, shape)
+
+	placed_but_not_ranked[densest_coord] = False
+	ranks[densest_coord] = rank`,
 			iter: [
 				{
 					name: "before-remove",
+					varname: "placed_pixels",
 					step: 1,
 					markers: [],
 					comment: "remaining pixels at the begin of the iteration",
 				},
 				{
 					name: "blurred",
+					varname: "blurred",
 					step: 1,
 					markers: [],
 					comment: "Image gets blurred",
 				},
 				{
 					name: "blurred_dense_masked",
+					varname: "(blurred * placed_but_not_ranked)",
 					step: 1,
 					markers: [
 						{
 							key: "densest",
-							color: "cyan",
+							color: "magenta",
+							varname: "densest",
 						},
 					],
 					comment:
@@ -148,10 +206,12 @@
 				// },
 				{
 					name: "after-remove",
+					varname: "placed_pixels",
 					step: 1,
 					markers: [
 						{
 							key: "densest",
+							varname: "densest",
 							color: "#ff3333",
 						},
 					],
@@ -159,11 +219,13 @@
 				},
 				{
 					name: "after-ranks",
+					varname: "ranks",
 					step: 1,
 					markers: [
 						{
 							key: "densest",
-							color: "lightgreen",
+							color: "#ffcc00",
+							varname: "densest",
 						},
 					],
 					comment: "Rank value is assigned to the selected pixel",
@@ -177,12 +239,21 @@
 				{
 					step: 0,
 					name: "initial",
+					varname: "placed_pixels",
 					comment: "Initial binary mask of already placed pixels",
 				},
 			],
+			iter_code: `for rank in range(count_remaining):
+	blurred = gaussian(placed_pixels)
+	voidest = (blurred + placed_pixels).argmin()
+	voidest_coord = np.unravel_index(voidest, shape)
+
+	placed_pixels[voidest_coord] = True
+	ranks[voidest_coord] = count_placed + rank`,
 			iter: [
 				{
 					name: "before-new",
+					varname: "placed_pixels",
 					step: 1,
 					markers: [],
 					comment:
@@ -190,6 +261,7 @@
 				},
 				{
 					name: "blurred",
+					varname: "blurred",
 					step: 1,
 					markers: [],
 					comment:
@@ -197,11 +269,13 @@
 				},
 				{
 					name: "blurred_voidest_offset",
+					varname: "blurred + placed_pixels",
 					step: 1,
 					markers: [
 						{
 							key: "voidest",
-							color: "lightgreen",
+							varname: "voidest",
+							color: "magenta",
 						},
 					],
 					comment:
@@ -209,22 +283,26 @@
 				},
 				{
 					name: "after-new",
+					varname: "placed_pixels",
 					step: 1,
 					markers: [
 						{
 							key: "voidest",
-							color: "lightgreen",
+							color: "#aaffaa",
+							varname: "voidest",
 						},
 					],
 					comment: "Pixel is added to mask",
 				},
 				{
 					name: "after-ranks",
+					varname: "ranks",
 					step: 1,
 					markers: [
 						{
 							key: "voidest",
-							color: "lightgreen",
+							color: "#ffcc00",
+							varname: "voidest",
 						},
 					],
 					comment: "Next rank is assigned to selected Pixel",
@@ -234,26 +312,44 @@
 		"5": {
 			name: "Results",
 			intro: "The final image can be further processed. For example only the pixel with intensities below 10% can be selected:",
+			code: `psd = np.abs(spec*np.conj(spec))
+log_psd = np.log(psd+eps)
+log_psd[size//2,size//2] = 0 # set DC frequency to 0
+psd[size//2,size//2] = 0 # set DC frequency to 0`,
 			start: [
 				{
 					step: 0,
 					name: "result",
+					varname: "ranks",
 					comment:
 						"Resulting image, each pixel has a distinct intensity andsimilar intensities are not close to each other.",
 				},
 				{
 					step: 0,
 					name: "psd",
+					varname: "psd",
 					comment:
 						"The Power-Spectral-Density(PSD) of the resulting image has a black spot at the center. That is, the resutling image does not contain any lower frequencies. This is the primary characteristic for blue noise.",
 				},
 				{
 					step: 0,
 					name: "log-psd",
+					varname: "log_psd",
 					comment:
 						"The logarithm of the PSD also shows a dark region at the low frequencies.",
 				},
-
+			],
+		},
+		"6": {
+			name: "Thresholding",
+			intro: "The final image can be further processed. For example only the pixel with intensities below 10% can be selected:",
+			code: `thres = space < 0.9
+thres_spec = fftshift(fft2(thres))
+thres_psd = np.abs(thres_spec*np.conj(thres_spec))
+log_thres_psd = np.log(thres_psd+eps)
+log_thres_psd[size//2,size//2] = 0 # set DC frequency to 0
+thres_psd[size//2,size//2] = 0 # set DC frequency to 0`,
+			start: [
 				{
 					step: 1,
 					name: "thresholded",
@@ -295,6 +391,9 @@
 			{#each Object.keys(phase_images) as p (p)}
 				<h2>{phase_images[p].name}</h2>
 				<p>{phase_images[p].intro}</p>
+				{#if phase_images[p].code}
+					<pre class="code-snippet">{phase_images[p].code}</pre>
+				{/if}
 				{@const iterations = read(
 					["phases", p, L.values, "length"],
 					loadedRecording,
@@ -337,12 +436,21 @@
 								>
 								</svg>
 							</div>
-							{pi.comment}
+							<div style="text-align: center;">
+								<code>{pi.varname}</code>
+							</div>
+							<div>
+								{pi.comment}
+							</div>
 						</div>
 					{/each}
 				</div>
 
 				{#if phase_images[p].iter}
+					{#if phase_images[p].iter_code}
+						<pre class="code-snippet">{phase_images[p]
+								.iter_code}</pre>
+					{/if}
 					<label class="number-picker">
 						Iteration
 						<input
@@ -365,7 +473,6 @@
 							type="button">Next</button
 						>
 					</label>
-					<br />
 					<div class="row">
 						{#each phase_images[p].iter as pi}
 							{@const seekable = atom(false)}
@@ -376,6 +483,7 @@
 							<div>
 								<div class="stack">
 									<video
+										autobuffer
 										class:unseekable={!seekable.value}
 										disablePictureInPicture
 										class="stacked-video bitmap"
@@ -407,6 +515,20 @@
 												size.value.y,
 											)}
 											<rect
+												rx="0.3"
+												ry="0.3"
+												x={xy.x - 1}
+												y={xy.y - 1}
+												fill="none"
+												width="3"
+												height="3"
+												stroke-width="2"
+												stroke={m.color}
+												opacity="0.3"
+											></rect>
+											<rect
+												rx="0.3"
+												ry="0.3"
 												x={xy.x - 1}
 												y={xy.y - 1}
 												fill="none"
@@ -418,7 +540,27 @@
 										{/each}
 									</svg>
 								</div>
-								{pi.comment}
+								<div style="text-align: center;">
+									<code>{pi.varname}</code>
+								</div>
+								{#each pi.markers as m, i (m.key)}
+									{@const xy = unravel(
+										loadedRecording.value.phases[p][m.key][
+											videoTimeInteger.value
+										],
+										size.value.x,
+										size.value.y,
+									)}
+									<code
+										style:padding="0.3em"
+										style:background="#333"
+										style:color={m.color}
+										>{m.varname} = ({xy.x}, {xy.y})</code
+									><br />
+								{/each}
+								<div>
+									{pi.comment}
+								</div>
 							</div>
 						{/each}
 					</div>
@@ -442,6 +584,7 @@
 		display: grid;
 		grid-template-columns: max-content;
 		grid-template-rows: max-content;
+		padding: 0.5em;
 	}
 
 	.stack > * {
@@ -544,7 +687,7 @@
 		color: #fff;
 		padding: 1em;
 		font-family: monospace;
-		font-size: 1.3em;
+		font-size: 1.1em;
 		line-height: 1.4;
 	}
 

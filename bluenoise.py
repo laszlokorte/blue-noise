@@ -50,18 +50,21 @@ class NoopLogger:
 class FileLogger:
     """Logger"""
     # pylint: disable=C0116
-    target = path.join(getcwd(), "bluenoise-steps")
+    target = None
     current_phase = None
     current_step = 'global'
     current_iteration = None
 
     buffered_files = []
-    subdirs = []
-
     record = {
         "globals": {},
         "phases": {}
     }
+    subdirs = []
+
+
+    def __init__(self, target_dir):
+        self.target = target_dir
 
     def set_phase(self, phase):
         self.current_step = 0
@@ -129,7 +132,7 @@ def rescale(arr):
     """Rescale range of array to 0-1"""
     return (arr - np.min(arr)) / np.ptp(arr)
 
-def find_denses(mask, sigma, restrict = 1, mode="wrap", truncate=4.0, logger = None):
+def find_densest(mask, sigma, mode="wrap", truncate=4.0, logger = None):
     """Find the maximum in the blurred binary mask to select pixel in densest area"""
     blurred = skfilter.gaussian(mask, sigma=sigma, mode=mode, truncate=truncate)
 
@@ -137,12 +140,10 @@ def find_denses(mask, sigma, restrict = 1, mode="wrap", truncate=4.0, logger = N
         blurred_normalized = rescale(blurred)
         logger.log_image("blurred", blurred_normalized)
         logger.log_image("blurred_dense_masked", blurred_normalized * mask)
-        if not np.isscalar(restrict):
-            logger.log_image("blurred_dense_restricted", blurred_normalized * mask * restrict)
 
-    return (blurred * mask * restrict).argmax()
+    return (blurred * mask).argmax()
 
-def find_voidest(mask, sigma, restrict = 1, mode="wrap", truncate=4.0, logger = None):
+def find_voidest(mask, sigma, mode="wrap", truncate=4.0, logger = None):
     """Find the minimum in the blurred binary mask to select pixel in sparsest area"""
     blurred = skfilter.gaussian(mask, sigma=sigma, mode=mode, truncate=truncate)
 
@@ -151,11 +152,8 @@ def find_voidest(mask, sigma, restrict = 1, mode="wrap", truncate=4.0, logger = 
         blurred_plus_mask_normalized = rescale(blurred + mask)
         logger.log_image("blurred", blurred_normalized)
         logger.log_image("blurred_voidest_offset", blurred_plus_mask_normalized)
-        if not np.isscalar(restrict):
-            logger.log_image("blurred_voidest_restricted",
-                             (blurred_plus_mask_normalized) * restrict)
 
-    return ((blurred + mask) * restrict).argmin()
+    return ((blurred + mask)).argmin()
 
 def smallest_type(max_number):
     """Returns the smallest numpy type the supports the given maximum number"""
@@ -185,19 +183,24 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
     logger.set_step(1)
     logger.log_image("initial_white_noise", initial_white_noise)
     initial_ratio_white = initial_white_noise >= (1-initial_ratio)
+
+    count_white = np.sum(initial_ratio_white)
+    to_add = initial_ratio_white.size - count_white
+
     logger.set_step(2)
     logger.log_image("initial_ratio_white", initial_ratio_white)
     phase1 = initial_ratio_white #.copy()
-    prev = None
+
 
     logger.set_step(3)
     logger.start_iteration()
+    prev = None
     while True:
         logger.step_iteration()
         logger.log_image("before-swap", phase1)
 
         # Swap pixels between densest and sparsest area
-        densest = find_denses(phase1,
+        densest = find_densest(phase1,
                               sigma=sigma,
                               mode=padding_mode,
                               truncate=truncate,
@@ -230,7 +233,6 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
     phase2 = phase1.copy()
     logger.set_phase(2)
     logger.log_image("initial", phase2)
-    count_white = np.sum(phase1)
     logger.log_value("count_white", int(count_white))
 
     logger.set_step(1)
@@ -239,8 +241,7 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
         logger.step_iteration()
         logger.log_image("before-remove", phase2)
 
-        densest = find_denses(phase2,
-                              restrict=phase1, sigma=sigma,
+        densest = find_densest(phase2, sigma=sigma,
                               mode=padding_mode, truncate=truncate,
                               logger=logger)
         densest_coord = np.unravel_index(densest, shape)
@@ -260,7 +261,7 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
 
     logger.log_image("initial", phase3)
 
-    to_add = phase1.size - count_white
+    
 
     logger.set_step(1)
     logger.start_iteration()
@@ -344,12 +345,12 @@ def example_plot(size, logger):
 
     logger.set_step(1)
     thres = space < 0.9
-    logger.log_image('tresholded', thres)
     thres_spec = fftshift(fft2(thres))
     thres_psd = np.abs(thres_spec*np.conj(thres_spec))
     log_thres_psd = np.log(thres_psd+eps)
     log_thres_psd[size//2,size//2] = 0 # set DC frequency to 0
     thres_psd[size//2,size//2] = 0 # set DC frequency to 0
+    logger.log_image('tresholded', thres)
     logger.log_image('tresholded-psd', rescale(thres_psd))
     logger.log_image('tresholded-log-psd', rescale(log_thres_psd))
 
@@ -388,4 +389,4 @@ def example_plot(size, logger):
 
 
 if __name__ == "__main__":
-    example_plot(32, FileLogger())
+    example_plot(32, NoopLogger())
