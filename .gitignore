@@ -2,3 +2,4 @@ node_modules
 publish.sh
 dist
 output
+.DS_Store

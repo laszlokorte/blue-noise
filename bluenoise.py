@@ -104,14 +104,19 @@ class FileLogger:
             return
 
         if self.current_phase not in self.record['phases']:
-            self.record['phases'][self.current_phase] = {}
+            self.record['phases'][self.current_phase] = {
+                "static": {},
+                "iterations": {},
+                "iteration_count": None,
+            }
 
         if self.current_iteration is None:
-            self.record['phases'][self.current_phase][name] = value
+            self.record['phases'][self.current_phase]['static'][name] = value
         else:
-            if name not in self.record['phases'][self.current_phase]:
-                self.record['phases'][self.current_phase][name] = []
-            self.record['phases'][self.current_phase][name].append(value)
+            if name not in self.record['phases'][self.current_phase]['iterations']:
+                self.record['phases'][self.current_phase]['iterations'][name] = []
+            self.record['phases'][self.current_phase]['iterations'][name].append(value)
+            self.record['phases'][self.current_phase]['iteration_count'] = self.current_iteration
 
     def write_record(self, file_name):
         Path(self.target).mkdir(parents=True, exist_ok=True)
@@ -183,6 +188,7 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
     logger.set_step(1)
     logger.log_image("initial_white_noise", initial_white_noise)
     initial_ratio_white = initial_white_noise >= (1-initial_ratio)
+    logger.log_value("initial_ratio_white", [(int(x),int(y)) for (x,y) in zip(*np.nonzero(initial_ratio_white))])
 
     count_white = np.sum(initial_ratio_white)
     to_add = initial_ratio_white.size - count_white
@@ -211,6 +217,9 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
                                truncate=truncate,
                                logger=logger)
 
+        logger.log_value("densest", int(densest))
+        logger.log_value("voidest", int(voidest))
+
         if prev == (voidest, densest):
             break
         if densest == voidest:
@@ -224,8 +233,6 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
 
         prev = (densest, voidest)
         logger.log_image("after-swap", phase1)
-        logger.log_value("densest", int(densest))
-        logger.log_value("voidest", int(voidest))
     logger.stop_iteration()
 
     # Phase 2: remove pixels in descending order from densest
@@ -384,9 +391,9 @@ def example_plot(size, logger):
 
     plt.show()
 
-    logger.write_frames('frames')
+    #logger.write_frames('frames')
     logger.write_record('recording.json')
 
 
 if __name__ == "__main__":
-    example_plot(32, NoopLogger())
+    example_plot(32, FileLogger('.'))

@@ -1,0 +1,43 @@
+.python-kw {
+	font-weight: bold;
+	color: #A0D2E5;
+}
+
+.python-comma {
+	color: #ccc;
+}
+.python-colon {
+	color: #ccc;
+}
+.python-paren {
+	color: #ccc;
+}
+.python-op {
+	color: #ccc;
+}
+
+.python-comment {
+	color: #aaa;
+}
+
+.python-string {
+	color: #e8c300;
+}
+
+.python-number {
+	color: #5BD000;
+}
+
+.python-skip {
+	opacity: 0.3;
+}
+
+.python-slider {
+	display: inline-flex;
+	vertical-align: baseline;
+}
+
+.python-slider > input {
+	margin: 0;
+	padding: 0;
+}
