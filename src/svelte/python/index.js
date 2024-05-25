@@ -3,6 +3,7 @@ import PythonBlock from './PythonBlock.svelte';
 import PythonComment from './PythonComment.svelte';
 import PythonDef from './PythonDef.svelte';
 import PythonIndent from './PythonIndent.svelte';
+import PythonIndented from './PythonIndented.svelte';
 import PythonLoop from './PythonLoop.svelte';
 import PythonReturn from './PythonReturn.svelte';
 import PythonWhile from './PythonWhile.svelte';
@@ -16,6 +17,7 @@ PythonBlock,
 PythonComment,
 PythonDef,
 PythonIndent,
+PythonIndented,
 PythonLoop,
 PythonReturn,
 PythonWhile,

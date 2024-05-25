@@ -11,6 +11,6 @@
 	{right}
 {/if}</span>
 {#if currentValue !== null}
-<span class="python-comment"># {left} = {currentValue}</span>
+<span class="python-comment"># => {currentValue}</span>
 {/if}
 <br />

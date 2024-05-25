@@ -7,7 +7,7 @@
 	import { forcePlain } from "./contenteditable.js";
 	import { lerp, clamp, PHI } from "./utils.js";
 	import rec from "./recording.json";
-	import {PythonAssign, PythonComment, PythonDef, PythonWhile, PythonKw, PythonIf, PythonLoop, PythonReturn, PythonSkip} from './python'
+	import {PythonAssign, PythonComment, PythonDef, PythonIndented, PythonWhile, PythonKw, PythonIf, PythonLoop, PythonReturn, PythonSkip} from './python'
 	import './python/python.css'
 
 	const recording = atom(rec);
@@ -62,7 +62,6 @@
 
 
 	<div class="code-snippet">
-		<PythonComment text="This is the python function that you would need to write" />
 		<PythonDef name="blueNoise" params={['size','sigma=2.0']}>
 			<PythonComment text="Setup" />
 
@@ -71,11 +70,47 @@
 				(size, size)
 				{/snippet}
 			</PythonAssign>
+			<br>
 			<PythonAssign left="ranks" right="np.zeros(shape)" />
 
 
 			<PythonAssign left="initial_white_noise" right="np.random.rand(size, size)"  />
+
+
 			<PythonAssign left="placed_pixels" right="initial_white_noise >= (1-initial_ratio)" />
+
+
+			<div class="media-row">
+				<PythonIndented>
+					<div class="row">
+						<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+						<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+						<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+					</div>
+				</PythonIndented>
+			</div>
+
 			<PythonAssign left="count_placed" right="np.sum(placed_pixels)" currentValue={initialWhite} />
 
 			<PythonAssign left="count_remaining" right="placed_pixels.size - count_placed" currentValue={remainingCount} />
@@ -94,6 +129,47 @@
 				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
 				<PythonAssign left="densest" right="(blurred * placed_pixels).argmax()" currentValue={phase1Densest} />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase1Voidest} />
+
+
+				<div class="media-row">
+					<PythonIndented>
+						<div class="row">
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+						</div>
+					</PythonIndented>
+				</div>
+
 				<PythonIf condition="prev_swap == (voidest, densest)" currentValue={phase1If1}>
 					<PythonSkip skip={!phase1If1}>
 						<PythonKw token="break" />
@@ -111,9 +187,24 @@
 						<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})' />
 						<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})' />
 
-
 						<PythonAssign left="placed_pixels[densest_coord]" right="False" />
 						<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
+
+
+						<div class="media-row">
+							<PythonIndented>
+								<div class="row">
+									<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+								</div>
+							</PythonIndented>
+						</div>
 
 						<PythonAssign left="prev_swap" right="(densest, voidest)" />
 					</PythonSkip>
@@ -133,8 +224,50 @@
 				<PythonAssign left="blurred" right="gaussian(placed_but_not_ranked, sigma)" />
 				<PythonAssign left="densest" right="(blurred * placed_but_not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})' />
+
+				<div class="media-row">
+					<PythonIndented>
+						<div class="row">
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+						</div>
+					</PythonIndented>
+				</div>
+
 				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False" />
 				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value} />
+
+
 			</PythonLoop>
 			<br>
 
@@ -146,13 +279,133 @@
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase3Voidest} />
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})' />
 
+
+				<div class="media-row">
+					<PythonIndented>
+						<div class="row">
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+							<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+						</div>
+					</PythonIndented>
+				</div>
+
 				<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
 				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank" />
 			</PythonLoop>
 			<br>
 			<PythonReturn value="ranks"/>
-
 		</PythonDef>
+		<br>
+	</div>
+	<h2>Results</h2>
+	<div class="code-snippet">
+		result = blueNoise({size})<br>
+		spec = fftshift(fft2(result))<br>
+    	psd = np.abs(spec * np.conj(spec))<br>
+    	log_psd = np.log(psd)
+
+		<div class="media-row">
+			<PythonIndented>
+				<div class="row centered">
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>psd</code>
+						</figcaption>
+					</figure>
+
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>log_psd</code>
+						</figcaption>
+					</figure>
+				</div>
+			</PythonIndented>
+		</div>
+	</div>
+	<h2>Threshold</h2>
+	<div class="code-snippet">
+		result = blueNoise({size})<br>
+		spec = fftshift(fft2(result))<br>
+    	psd = np.abs(spec * np.conj(spec))<br>
+    	log_psd = np.log(psd)
+
+		<div class="media-row">
+			<PythonIndented>
+				<div class="row centered">
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>result</code>
+						</figcaption>
+					</figure>
+
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>psd</code>
+						</figcaption>
+					</figure>
+
+					<figure>
+						<div class="stack">
+							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+						</div>
+						<figcaption>
+							<code>log_psd</code>
+						</figcaption>
+					</figure>
+				</div>
+			</PythonIndented>
+		</div>
 	</div>
 
 	<footer>
@@ -163,6 +416,14 @@
 </section>
 
 <style>
+
+	figure {
+		margin: 0;
+		padding: 0;
+	}
+	figcaption {
+		text-align: center;
+	}
 	.bitmap {
 		image-rendering: pixelated;
 	}
@@ -170,7 +431,6 @@
 		display: grid;
 		grid-template-columns: max-content;
 		grid-template-rows: max-content;
-		padding: 0.5em;
 	}
 
 	.stack > * {
@@ -182,8 +442,8 @@
 	.stacked-video {
 		width: 100%;
 		height: 100%;
-		max-width: 15em;
-		max-height: 15em;
+		max-width: 12em;
+		max-height: 12em;
 		display: block;
 	}
 
@@ -199,9 +459,10 @@
 		pointer-events: none;
 		width: 100%;
 		height: 100%;
-		max-width: 15em;
-		max-height: 15em;
+		max-width: 12em;
+		max-height: 12em;
 		display: block;
+		border: 1px solid gray;
 	}
 
 	.svg {
@@ -212,6 +473,16 @@
 	.row {
 		display: flex;
 		gap: 1em;
+	}
+
+	.centered {
+		justify-content: center;
+	}
+
+	.media-row {
+		margin: 0.5em 0;
+		padding: 0.8em 0;
+		background: #0003;
 	}
 
 	header {
