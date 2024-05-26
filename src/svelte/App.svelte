@@ -303,16 +303,16 @@
 			<PythonComment text="Phase 2: Rank pixels by density" />
 
 
-			<PythonAssign left="placed_but_not_ranked" right="placed_pixels.copy()" />
+			<PythonAssign left="not_ranked" right="placed_pixels.copy()" />
 
 			<PythonLoop iter="rank" collection="range(count_placed, 0, -1)" iterations={maxPhase2Focus} focus={phase2Focus}>
 				<PythonComment noselect text="rank = {phase2Rank.value}" />
 
-				<PythonAssign left="blurred" right="gaussian(placed_but_not_ranked, sigma)" />
-				<PythonAssign left="densest" right="(blurred * placed_but_not_ranked).argmax()" currentValue={phase2Densest} />
+				<PythonAssign left="blurred" right="gaussian(not_ranked, sigma)" />
+				<PythonAssign left="densest" right="(blurred * not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})' />
 				<br>
-				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False">
+				<PythonAssign left="not_ranked[densest_coord]" right="False">
 				</PythonAssign>
 				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value}>
 					{#snippet marker()}
@@ -334,7 +334,7 @@
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>placed_but_not_ranked</code>
+							<code>not_ranked</code>
 						</figcaption>
 					</figure>
 							<figure>
@@ -362,7 +362,7 @@
 							</svg>
 						</div>
 						<figcaption>
-							<code>blurred * <br>placed_but_not_ranked</code>
+							<code>blurred * <br>not_ranked</code>
 						</figcaption>
 					</figure>
 							<figure>
@@ -583,6 +583,7 @@
 		display: grid;
 		grid-template-columns: max-content;
 		grid-template-rows: max-content;
+		border: 1px solid gray;
 	}
 
 	.stack :global(> *) {
@@ -627,7 +628,6 @@
 		max-width: 12em;
 		max-height: 12em;
 		display: block;
-		border: 1px solid gray;
 	}
 
 	.stacked-sprite {
@@ -637,7 +637,6 @@
 		max-width: 12em;
 		max-height: 12em;
 		display: grid;
-		border: 1px solid gray;
 		overflow: hidden;
 	}
 

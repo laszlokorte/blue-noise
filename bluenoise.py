@@ -5,6 +5,8 @@ import json
 import numpy as np
 import skimage.filters as skfilter
 from PIL import Image
+import matplotlib.pyplot as plt
+from scipy.fft import fft2, fftshift
 
 # void and cluster method according to:
 # R. A. Ulichney (1988). Dithering with blue noise. Proc. IEEE, 76(1):56-79.
@@ -157,6 +159,14 @@ def find_densest(mask, sigma, mode="wrap", truncate=4.0, logger = None):
         blurred_normalized = rescale_max(blurred)
         logger.log_image("blurred", blurred_normalized)
         logger.log_image("blurred_dense_masked", blurred_normalized * mask)
+
+    # if (blurred * mask).argmax() != blurred.argmax():
+    #     plt.figure(1)
+    #     plt.subplot(211)
+    #     plt.imshow(blurred, vmin=0,cmap="grey")
+    #     plt.subplot(212)
+    #     plt.imshow(blurred * mask, vmin=0,cmap="grey")
+    #     plt.show()
 
     return (blurred * mask).argmax()
 
@@ -324,8 +334,6 @@ def example_plot(size, logger):
     to actually being blue noise"""
 
     # pylint: disable=C0415
-    import matplotlib.pyplot as plt
-    from scipy.fft import fft2, fftshift
     eps = np.finfo(np.float32).eps
 
     space_quantized = bluenoise(size, sigma=1, initial_ratio=0.1, truncate=4,logger=logger)
@@ -408,4 +416,4 @@ def example_plot(size, logger):
 
 
 if __name__ == "__main__":
-    example_plot(32, FileLogger('.'))
+    example_plot(32, NoopLogger())
