@@ -6,9 +6,18 @@
 	import { atom, view, read, failableView } from "./svatom.svelte.js";
 	import { forcePlain } from "./contenteditable.js";
 	import { lerp, clamp, PHI } from "./utils.js";
-	import rec from "./recording.json";
+	import rec from "../recording.json";
 	import {PythonAssign, PythonComment, PythonDef, PythonIndented, PythonWhile, PythonKw, PythonIf, PythonLoop, PythonReturn, PythonSkip} from './python'
 	import './python/python.css'
+	import Bitmap from './Bitmap.svelte'
+
+	import initialWhiteImage from '../steps/p01-s01-initial_white_noise.png'
+	import resultImage from '../steps/p05-s00-result.png'
+	import psdImage from '../steps/p05-s00-psd.png'
+	import logPsdImage from '../steps/p05-s00-log-psd.png'
+	import resultThresImage from '../steps/p06-s01-thresholded.png'
+	import psdThresImage from '../steps/p06-s01-thresholded-psd.png'
+	import logPsdThresImage from '../steps/p06-s01-thresholded-log-psd.png'
 
 	const recording = atom(rec);
 	const focus = atom({});
@@ -16,8 +25,9 @@
 
 	const size = $derived(recording.value.globals.height)
 	const pixelCount = $derived(recording.value.globals.width * recording.value.globals.height)
-	const initialWhite = $derived(recording.value.phases["1"].static.initial_ratio_white.length)
-	const remainingCount = $derived(pixelCount - initialWhite)
+	const initialWhite = $derived(recording.value.phases["1"].static.initial_ratio_white.map(([y,x]) => ({x,y})))
+	const initialWhiteCount = $derived(recording.value.phases["1"].static.initial_ratio_white.length)
+	const remainingCount = $derived(pixelCount - initialWhiteCount)
 	const maxPhase1Focus = $derived(recording.value.phases["1"].iteration_count-1)
 	const maxPhase2Focus = $derived(recording.value.phases["2"].iteration_count-1)
 	const maxPhase3Focus = $derived(recording.value.phases["3"].iteration_count-1)
@@ -25,7 +35,7 @@
 	const phase2Focus = view(['phase2', L.valueOr(0)], focus)
 	const phase3Focus = view(['phase3', L.valueOr(0)], focus)
 
-	const phase2Rank = read(L.iso(x => initialWhite-x, x=> initialWhite-x), phase2Focus)
+	const phase2Rank = read(L.iso(x => initialWhiteCount-x, x=> initialWhiteCount-x), phase2Focus)
 
 	const phase1DensestPrev = $derived(phase1Focus.value < 1 ? null : recording.value.phases["1"].iterations['densest'][phase1Focus.value-1])
 	const phase1VoidestPrev = $derived(phase1Focus.value < 1 ? null : recording.value.phases["1"].iterations['voidest'][phase1Focus.value-1])
@@ -58,11 +68,13 @@
 		<h1>
 			<img src={favicon} class="icon" alt="Icon" />Generate Blue Noise
 		</h1>
+
+		<p>Some Intro text</p>
 	</header>
 
 
 	<div class="code-snippet">
-		<PythonDef name="blueNoise" params={['size','sigma=2.0']}>
+		<PythonDef name="blueNoise" params={['size','sigma=2.0','initial_ratio=0.1']}>
 			<PythonComment text="Setup" />
 
 			<PythonAssign left="shape" currentValue="({size}, {size})">
@@ -71,6 +83,8 @@
 				{/snippet}
 			</PythonAssign>
 			<br>
+			<PythonComment text="Init: Place some initial pixels based off thresholded white noise" />
+
 			<PythonAssign left="ranks" right="np.zeros(shape)" />
 
 
@@ -85,8 +99,8 @@
 					<div class="row">
 						<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x="0" y="0" width={size} height={size} fill="black" />
 							</svg>
 						</div>
 						<figcaption>
@@ -95,8 +109,8 @@
 					</figure>
 						<figure>
 						<div class="stack">
+							<img src={initialWhiteImage} alt="" class="stacked-image" />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x="0" y="0" width={size} height={size} fill="black" />
 							</svg>
 						</div>
 						<figcaption>
@@ -105,8 +119,9 @@
 					</figure>
 						<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} pixels={initialWhite}/>
+
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x="0" y="0" width={size} height={size} fill="black" />
 							</svg>
 						</div>
 						<figcaption>
@@ -117,19 +132,19 @@
 				</PythonIndented>
 			</div>
 
-			<PythonAssign left="count_placed" right="np.sum(placed_pixels)" currentValue={initialWhite} />
+			<PythonAssign left="count_placed" right="np.sum(placed_pixels)" currentValue={initialWhiteCount} />
 
 			<PythonAssign left="count_remaining" right="placed_pixels.size - count_placed" currentValue={remainingCount} />
 
 			<br>
-			<PythonComment text="Phase 1: Place intial" />
+			<PythonComment text="Phase 1: Spread white pixels more evenly. Swap between dense and void areas" />
 			<PythonAssign left="prev_swap" right="None" />
 
 			<PythonWhile condition="True" iterations={maxPhase1Focus} focus={phase1Focus}>
 				{#if phase1DensestPrev == null}
-				<PythonComment text="prev_swap = None" />
+				<PythonComment noselect text="prev_swap = None" />
 				{:else}
-				<PythonComment text="prev_swap = ({phase1DensestPrev}, {phase1VoidestPrev})" />
+				<PythonComment noselect text="prev_swap = ({phase1DensestPrev}, {phase1VoidestPrev})" />
 				{/if}
 
 				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
@@ -138,15 +153,15 @@
 
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})'>
 					{#snippet marker()}
-					<svg viewBox="0 0 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="middle">
-						<rect x={1} y={1} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
 					</svg>
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})'>
 					{#snippet marker()}
-					<svg viewBox="0 0 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="middle">
-						<rect x={1} y={1} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
 					</svg>
 					{/snippet}
 				</PythonAssign>
@@ -156,8 +171,8 @@
 						<div class="row">
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x="0" y="0" width={size} height={size} fill="black" />
 							</svg>
 						</div>
 						<figcaption>
@@ -197,6 +212,7 @@
 					</PythonIndented>
 				</div>
 
+				<PythonComment text="detect cycle" />
 				<PythonIf condition="prev_swap == (voidest, densest)" currentValue={phase1If1}>
 					<PythonSkip skip={!phase1If1}>
 						<PythonKw token="break" />
@@ -211,8 +227,20 @@
 						</PythonSkip>
 					</PythonIf>
 					<PythonSkip skip={phase1If2}>
-						<PythonAssign left="placed_pixels[densest_coord]" right="False" />
-						<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
+						<PythonAssign left="placed_pixels[densest_coord]" right="False">
+							{#snippet marker()}
+							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+								<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="red" />
+							</svg> = False
+							{/snippet}
+						</PythonAssign>
+						<PythonAssign left="placed_pixels[voidest_coord]" right="True">
+							{#snippet marker()}
+							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+								<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="green" />
+							</svg> = True
+							{/snippet}
+						</PythonAssign>
 
 
 						<div class="media-row">
@@ -220,6 +248,7 @@
 								<div class="row">
 									<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
 
@@ -248,20 +277,28 @@
 			<PythonAssign left="placed_but_not_ranked" right="placed_pixels.copy()" />
 
 			<PythonLoop iter="rank" collection="range(count_placed, 0, -1)" iterations={maxPhase2Focus} focus={phase2Focus}>
-				<PythonComment text="rank = {phase2Rank.value}" />
+				<PythonComment noselect text="rank = {phase2Rank.value}" />
 
 				<PythonAssign left="blurred" right="gaussian(placed_but_not_ranked, sigma)" />
 				<PythonAssign left="densest" right="(blurred * placed_but_not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})' />
 				<br>
-				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False" />
-				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value} />
+				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False">
+				</PythonAssign>
+				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value}>
+					{#snippet marker()}
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+					</svg> =
+					{/snippet}
+				</PythonAssign>
 
 				<div class="media-row">
 					<PythonIndented>
 						<div class="row">
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -278,6 +315,7 @@
 					</figure>
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
 								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
@@ -290,6 +328,7 @@
 					</figure>
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 
@@ -316,13 +355,20 @@
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})' />
 				<br>
 				<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
-				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank" />
+				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank">
+					{#snippet marker()}
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+					</svg> = {initialWhiteCount + phase3Focus.value}
+					{/snippet}
+				</PythonAssign>
 
 				<div class="media-row">
 					<PythonIndented>
 						<div class="row">
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -339,6 +385,7 @@
 					</figure>
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
 							</svg>
@@ -349,6 +396,7 @@
 					</figure>
 							<figure>
 						<div class="stack">
+							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 							</svg>
@@ -377,6 +425,7 @@
 				<div class="row centered">
 					<figure>
 						<div class="stack">
+							<img src={resultImage} class="stacked-image" alt="" />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -386,6 +435,8 @@
 
 					<figure>
 						<div class="stack">
+							<img src={psdImage} class="stacked-image" alt="" />
+
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -395,6 +446,8 @@
 
 					<figure>
 						<div class="stack">
+							<img src={logPsdImage} class="stacked-image" alt="" />
+
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -417,6 +470,7 @@
 				<div class="row centered">
 					<figure>
 						<div class="stack">
+							<img src={resultThresImage} class="stacked-image" alt="" />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -426,6 +480,7 @@
 
 					<figure>
 						<div class="stack">
+							<img src={psdThresImage} class="stacked-image" alt="" />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -435,6 +490,7 @@
 
 					<figure>
 						<div class="stack">
+							<img src={logPsdThresImage} class="stacked-image" alt="" />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -445,6 +501,12 @@
 			</PythonIndented>
 		</div>
 	</div>
+
+	<h2>References</h2>
+
+	<ul>
+		<li>Foo</li>
+	</ul>
 
 	<footer>
 		<a href="https://tools.laszlokorte.de" title="More educational tools"
@@ -471,7 +533,7 @@
 		grid-template-rows: max-content;
 	}
 
-	.stack > * {
+	.stack :global(> *) {
 		grid-area: 1 / 1;
 		align-self: stretch;
 		justify-self: stretch;
@@ -485,8 +547,21 @@
 		display: block;
 	}
 
+	.stacked-image {
+		width: 100%;
+		height: 100%;
+		max-width: 12em;
+		max-height: 12em;
+		display: block;
+		image-rendering: pixelated;
+	}
+
 	.seeking {
 		outline: pink 2px solid;
+	}
+
+	rect {
+		shape-rendering: crispEdges;
 	}
 
 	.unseekable {
@@ -522,6 +597,7 @@
 	}
 
 	.media-row {
+		user-select: none;
 		margin: 0.5em 0;
 		padding: 0.8em 0;
 		background: #0003;

@@ -8,7 +8,7 @@
 </script>
 
 <PythonIndent /><span class="python-kw">if</span> <span>{condition}</span><span class="python-colon">:</span>
-<span class="python-comment"># {currentValue ? "✅":"❌"}</span>
+<span class="python-comment python-noselect"> # {currentValue ? "✅ True":"❌ False"}</span>
 <br>
 <PythonBlock>
 	{@render children()}
