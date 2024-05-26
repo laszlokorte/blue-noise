@@ -42,7 +42,7 @@
 
 .python-slider > input {
 	margin: 0;
-	padding: 0;
+	padding: 1em;
 }
 
 .python-noselect {

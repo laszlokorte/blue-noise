@@ -55,7 +55,8 @@ class FileLogger:
     current_step = 'global'
     current_iteration = None
 
-    buffered_files = []
+    buffered_images = []
+    buffered_image_sequences = {}
     record = {
         "globals": {},
         "phases": {}
@@ -83,20 +84,15 @@ class FileLogger:
         self.current_iteration = None
 
     def log_image(self, name, array):
+        filename = f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}.png"
+
         if self.current_iteration is None:
-            filename = f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}.png"
+            self.buffered_images.append((filename, np.pad(array, 2)))
         else:
-            filename = path.join(
-                f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}",
-                f"{self.current_iteration:04d}.png"
-            )
-            self.subdirs.append(f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}")
+            if filename not in self.buffered_image_sequences:
+                self.buffered_image_sequences[filename] = []
+            self.buffered_image_sequences[filename].append(np.pad(array, 2))
 
-        if array.dtype == np.float32 or array.dtype == np.float64:
-            array = np.rint(array*255).astype(np.uint8)
-
-        image = Image.fromarray(array)
-        self.buffered_files.append((filename, image))
 
     def log_value(self, name, value):
         if self.current_phase is None:
@@ -127,22 +123,38 @@ class FileLogger:
     def write_frames(self, dir_name):
         Path(path.join(self.target, dir_name)).mkdir(parents=True, exist_ok=True)
 
-        for d in self.subdirs:
-            Path(path.join(self.target, dir_name, d)).mkdir(parents=False, exist_ok=True)
+        for (filename, array) in self.buffered_images:
+            if array.dtype == np.float32 or array.dtype == np.float64:
+                array = np.rint(array*255).astype(np.uint8)
 
-        for (filename, image) in self.buffered_files:
+            image = Image.fromarray(array)
+
+            image.save(path.join(self.target, dir_name, filename))
+
+        for filename, images in self.buffered_image_sequences.items():
+            stack = np.vstack(images)
+
+            if stack.dtype == np.float32 or stack.dtype == np.float64:
+                stack = np.rint(stack*255).astype(np.uint8)
+
+            image = Image.fromarray(stack)
+
             image.save(path.join(self.target, dir_name, filename))
 
 def rescale(arr):
     """Rescale range of array to 0-1"""
     return (arr - np.min(arr)) / np.ptp(arr)
 
+def rescale_max(arr):
+    """Rescale range of array to 0-1"""
+    return arr / np.max(arr)
+
 def find_densest(mask, sigma, mode="wrap", truncate=4.0, logger = None):
     """Find the maximum in the blurred binary mask to select pixel in densest area"""
     blurred = skfilter.gaussian(mask, sigma=sigma, mode=mode, truncate=truncate)
 
     if logger is not None:
-        blurred_normalized = rescale(blurred)
+        blurred_normalized = rescale_max(blurred)
         logger.log_image("blurred", blurred_normalized)
         logger.log_image("blurred_dense_masked", blurred_normalized * mask)
 
@@ -153,8 +165,8 @@ def find_voidest(mask, sigma, mode="wrap", truncate=4.0, logger = None):
     blurred = skfilter.gaussian(mask, sigma=sigma, mode=mode, truncate=truncate)
 
     if logger is not None:
-        blurred_normalized = rescale(blurred)
-        blurred_plus_mask_normalized = rescale(blurred + mask)
+        blurred_normalized = rescale_max(blurred)
+        blurred_plus_mask_normalized = rescale_max(blurred + mask)
         logger.log_image("blurred", blurred_normalized)
         logger.log_image("blurred_voidest_offset", blurred_plus_mask_normalized)
 
@@ -391,7 +403,7 @@ def example_plot(size, logger):
 
     plt.show()
 
-    #logger.write_frames('frames')
+    logger.write_frames('src/steps')
     logger.write_record('recording.json')
 
 

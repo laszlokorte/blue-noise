@@ -6,18 +6,32 @@
 	import { atom, view, read, failableView } from "./svatom.svelte.js";
 	import { forcePlain } from "./contenteditable.js";
 	import { lerp, clamp, PHI } from "./utils.js";
-	import rec from "../recording.json";
+	import rec from "../steps/recording.json";
 	import {PythonAssign, PythonComment, PythonDef, PythonIndented, PythonWhile, PythonKw, PythonIf, PythonLoop, PythonReturn, PythonSkip} from './python'
 	import './python/python.css'
 	import Bitmap from './Bitmap.svelte'
 
 	import initialWhiteImage from '../steps/p01-s01-initial_white_noise.png'
+	import initialWhiteRatio from '../steps/p01-s02-initial_ratio_white.png'
+	import p1Placed from '../steps/p01-s03-before-swap.png'
+	import p1PlacedAfter from '../steps/p01-s03-after-swap.png'
+	import p1Blurred from '../steps/p01-s03-blurred.png'
+	import p1Masked from '../steps/p01-s03-blurred_dense_masked.png'
+	import p1Offset from '../steps/p01-s03-blurred_voidest_offset.png'
 	import resultImage from '../steps/p05-s00-result.png'
 	import psdImage from '../steps/p05-s00-psd.png'
 	import logPsdImage from '../steps/p05-s00-log-psd.png'
-	import resultThresImage from '../steps/p06-s01-thresholded.png'
-	import psdThresImage from '../steps/p06-s01-thresholded-psd.png'
-	import logPsdThresImage from '../steps/p06-s01-thresholded-log-psd.png'
+	import resultThresImage from '../steps/p05-s01-thresholded.png'
+	import psdThresImage from '../steps/p05-s01-thresholded-psd.png'
+	import logPsdThresImage from '../steps/p05-s01-thresholded-log-psd.png'
+	import p2PlacedBefore from '../steps/p02-s01-before-remove.png'
+	import p2Blurred from '../steps/p02-s01-blurred.png'
+	import p2Masked from '../steps/p02-s01-blurred_dense_masked.png'
+	import p2Ranks from '../steps/p02-s01-after-ranks.png'
+	import p3placed from '../steps/p03-s01-before-new.png'
+	import p3blurred from '../steps/p03-s01-blurred.png'
+	import p3blurredOffset from '../steps/p03-s01-blurred_voidest_offset.png'
+	import p3ranks from '../steps/p03-s01-after-ranks.png'
 
 	const recording = atom(rec);
 	const focus = atom({});
@@ -75,16 +89,13 @@
 
 	<div class="code-snippet">
 		<PythonDef name="blueNoise" params={['size','sigma=2.0','initial_ratio=0.1']}>
-			<PythonComment text="Setup" />
 
+			<PythonComment text="Init: Place some initial pixels based off thresholded white noise" />
 			<PythonAssign left="shape" currentValue="({size}, {size})">
 				{#snippet subRight()}
 				(size, size)
 				{/snippet}
 			</PythonAssign>
-			<br>
-			<PythonComment text="Init: Place some initial pixels based off thresholded white noise" />
-
 			<PythonAssign left="ranks" right="np.zeros(shape)" />
 
 
@@ -99,8 +110,8 @@
 					<div class="row">
 						<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x="-2" y="-2" width={size+4} height={size+4} />
 							</svg>
 						</div>
 						<figcaption>
@@ -119,7 +130,7 @@
 					</figure>
 						<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} pixels={initialWhite}/>
+							<img src={initialWhiteRatio} alt="" class="stacked-image" />
 
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 							</svg>
@@ -171,7 +182,10 @@
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+							<div class="stacked-sprite" style:--sprite-index={phase1Focus.value}>
+							<img src={p1Placed} alt="" class="stacked-sprite-image" />
+							</div>
+
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 							</svg>
 						</div>
@@ -181,6 +195,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
+
+							<div class="stacked-sprite" style:--sprite-index={phase1Focus.value}>
+							<img src={p1Blurred} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -189,6 +207,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
+
+							<div class="stacked-sprite" style:--sprite-index={phase1Focus.value}>
+							<img src={p1Masked} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="magenta" />
 							</svg>
@@ -199,6 +221,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
+
+							<div class="stacked-sprite" style:--sprite-index={phase1Focus.value}>
+							<img src={p1Offset} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
 								<rect x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
@@ -248,7 +274,10 @@
 								<div class="row">
 									<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+
+							<div class="stacked-sprite" style:--sprite-index={phase1Focus.value}>
+							<img src={p1PlacedAfter} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
 
@@ -298,7 +327,10 @@
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+
+							<div class="stacked-sprite" style:--sprite-index={phase2Focus.value}>
+							<img src={p2PlacedBefore} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -307,6 +339,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
+
+							<div class="stacked-sprite" style:--sprite-index={phase2Focus.value}>
+							<img src={p2Blurred} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -315,7 +351,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+
+							<div class="stacked-sprite" style:--sprite-index={phase2Focus.value}>
+							<img src={p2Masked} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
 								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
@@ -328,7 +367,10 @@
 					</figure>
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+
+							<div class="stacked-sprite" style:--sprite-index={phase2Focus.value}>
+							<img src={p2Ranks} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 
@@ -368,7 +410,10 @@
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+
+							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
+							<img src={p3placed} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -377,6 +422,9 @@
 					</figure>
 							<figure>
 						<div class="stack">
+							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
+							<img src={p3blurred} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
@@ -385,7 +433,9 @@
 					</figure>
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
+							<img src={p3blurredOffset} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
 							</svg>
@@ -396,7 +446,9 @@
 					</figure>
 							<figure>
 						<div class="stack">
-							<Bitmap width={size} height={size} />
+							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
+							<img src={p3ranks} alt="" class="stacked-sprite-image" />
+							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 							</svg>
@@ -576,6 +628,27 @@
 		max-height: 12em;
 		display: block;
 		border: 1px solid gray;
+	}
+
+	.stacked-sprite {
+		pointer-events: none;
+		width: 100%;
+		height: 100%;
+		max-width: 12em;
+		max-height: 12em;
+		display: grid;
+		border: 1px solid gray;
+		overflow: hidden;
+	}
+
+	.stacked-sprite-image {
+		width: 100%;
+		image-rendering: pixelated;
+		display: block;
+	}
+
+	.stacked-sprite-image {
+		margin-top: calc(-100% * var(--sprite-index,0 ));
 	}
 
 	.svg {
