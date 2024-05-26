@@ -85,26 +85,32 @@
 					<div class="row">
 						<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x="0" y="0" width={size} height={size} fill="black" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>ranks</code>
 						</figcaption>
 					</figure>
 						<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x="0" y="0" width={size} height={size} fill="black" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>initial_white_noise</code>
 						</figcaption>
 					</figure>
 						<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x="0" y="0" width={size} height={size} fill="black" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>placed_pixels</code>
 						</figcaption>
 					</figure>
 					</div>
@@ -130,42 +136,63 @@
 				<PythonAssign left="densest" right="(blurred * placed_pixels).argmax()" currentValue={phase1Densest} />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase1Voidest} />
 
+				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})'>
+					{#snippet marker()}
+					<svg viewBox="0 0 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="middle">
+						<rect x={1} y={1} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
+					</svg>
+					{/snippet}
+				</PythonAssign>
+				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})'>
+					{#snippet marker()}
+					<svg viewBox="0 0 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="middle">
+						<rect x={1} y={1} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
+					</svg>
+					{/snippet}
+				</PythonAssign>
 
 				<div class="media-row">
 					<PythonIndented>
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x="0" y="0" width={size} height={size} fill="black" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>placed_pixels</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="magenta" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred * <br>placed_pixels</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+
+								<rect x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred + <br>placed_pixels</code>
 						</figcaption>
-					</figure>
 						</div>
 					</PythonIndented>
 				</div>
@@ -184,9 +211,6 @@
 						</PythonSkip>
 					</PythonIf>
 					<PythonSkip skip={phase1If2}>
-						<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})' />
-						<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})' />
-
 						<PythonAssign left="placed_pixels[densest_coord]" right="False" />
 						<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
 
@@ -196,10 +220,15 @@
 								<div class="row">
 									<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
+
+								<rect x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
+
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>placed_pixels</code>
 						</figcaption>
 					</figure>
 								</div>
@@ -224,48 +253,55 @@
 				<PythonAssign left="blurred" right="gaussian(placed_but_not_ranked, sigma)" />
 				<PythonAssign left="densest" right="(blurred * placed_but_not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})' />
+				<br>
+				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False" />
+				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value} />
 
 				<div class="media-row">
 					<PythonIndented>
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>placed_but_not_ranked</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+
+								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred * <br>placed_but_not_ranked</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>ranks</code>
 						</figcaption>
 					</figure>
 						</div>
 					</PythonIndented>
 				</div>
-
-				<PythonAssign left="placed_but_not_ranked[densest_coord]" right="False" />
-				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value} />
 
 
 			</PythonLoop>
@@ -278,51 +314,53 @@
 				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase3Voidest} />
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})' />
-
+				<br>
+				<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
+				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank" />
 
 				<div class="media-row">
 					<PythonIndented>
 						<div class="row">
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>placed_pixels</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>blurred + <br> placed_pixels</code>
 						</figcaption>
 					</figure>
 							<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+							</svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>ranks</code>
 						</figcaption>
 					</figure>
 						</div>
 					</PythonIndented>
 				</div>
-
-				<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
-				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank" />
 			</PythonLoop>
-			<br>
 			<PythonReturn value="ranks"/>
 		</PythonDef>
 		<br>
@@ -339,7 +377,7 @@
 				<div class="row centered">
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>result</code>
@@ -348,7 +386,7 @@
 
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>psd</code>
@@ -357,7 +395,7 @@
 
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>log_psd</code>
@@ -379,7 +417,7 @@
 				<div class="row centered">
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>result</code>
@@ -388,7 +426,7 @@
 
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>psd</code>
@@ -397,7 +435,7 @@
 
 					<figure>
 						<div class="stack">
-							<svg viewBox="0 0 {size} {size}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
 							<code>log_psd</code>
@@ -477,6 +515,10 @@
 
 	.centered {
 		justify-content: center;
+	}
+
+	:global(.python-skip) .media-row {
+		display: none;
 	}
 
 	.media-row {

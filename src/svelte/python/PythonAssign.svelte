@@ -1,7 +1,7 @@
 <script>
 	import PythonIndent from "./PythonIndent.svelte";
 	import * as R from "ramda";
-	let { left, right, op = "=", subRight, currentValue = null } = $props();
+	let { left, right, op = "=", subRight, marker, currentValue = null } = $props();
 </script>
 
 <PythonIndent /><span>{left}</span>
@@ -10,7 +10,11 @@
 	{:else}
 	{right}
 {/if}</span>
+
 {#if currentValue !== null}
-<span class="python-comment"># => {currentValue}</span>
+<span class="python-comment"># =>
+
+{#if marker !== null}
+{@render marker()}{/if}{currentValue}</span>
 {/if}
 <br />

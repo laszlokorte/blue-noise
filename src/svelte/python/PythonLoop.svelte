@@ -9,7 +9,7 @@
 
 {#if iterations !== null}
 <PythonIndent /><span class="python-comment">
-	 # <span class="python-slider"><input type="range" max={iterations} bind:value={focus.value} min="0"></span>
+	 <span class="python-slider"># <input type="range" max={iterations} bind:value={focus.value} min="0"></span>
 </span><br>
 {/if}
 <PythonIndent /><span class="python-kw">for</span> <span>{iter}</span> <span class="python-kw">in</span> <span>{collection}</span><span class="python-colon">:</span>

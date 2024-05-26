@@ -35,6 +35,9 @@
 .python-slider {
 	display: inline-flex;
 	vertical-align: baseline;
+	gap: 0.5em;
+	align-items: center;
+	accent-color: #A0D2E5;
 }
 
 .python-slider > input {

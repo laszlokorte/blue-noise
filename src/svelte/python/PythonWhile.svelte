@@ -12,7 +12,7 @@
 
 {#if iterations !== null}<br>
 <PythonIndent /><span class="python-comment">
-	# <span class="python-slider"><input type="range" max={iterations} bind:value={focus.value} min="0"></span>
+	<span class="python-slider"># <input type="range" max={iterations} bind:value={focus.value} min="0"></span>
 </span><br>
 {/if}
 <PythonIndent /><span class="python-kw">while</span> <span>{condition}</span><span class="python-colon">:</span>
