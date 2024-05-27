@@ -124,7 +124,7 @@
 
 		<h3>Blue Noise</h3>
 
-		<p>A sequence of random numbers is called <em>blue noise</em> if succeeding numbers are very likely to be very different. This is in contrast to white noise, where each number would be completely unrelated to each other number in the squence. In a white noise sequency it would neither be supprising for the similar numbers occur right next to each other, nor would it be supprising for two succeeding values to be quite far appart. In blue noise neighbors are expected to be different. The opposite would be red noise, where neighboring values are expected to be at least similar.</p>
+		<p>A sequence of random numbers is called <em>blue noise</em> if succeeding numbers are very likely to be very different. This is in contrast to white noise, where each number would be completely unrelated to each other number in the squence. In a white noise sequency it would neither be surprising for the similar numbers occur right next to each other, nor would it be surprising for two succeeding values to be quite far appart. In blue noise neighbors are expected to be different. The opposite would be red noise, where neighboring values are expected to be at least similar.</p>
 
 		<p>
 			The characteristic check if a sequence is <em>blue noise</em> is to compute its <a target="_blank" href="https://en.wikipedia.org/wiki/Spectral_density#Power_spectral_density">Power spectral density</a> (the magnitude-square of its Fourier Transform) and then to check that it contains only high frequencies.
