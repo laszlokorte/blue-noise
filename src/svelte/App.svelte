@@ -18,7 +18,8 @@
 	import p1Blurred from '../steps/p01-s03-blurred.png'
 	import p1Masked from '../steps/p01-s03-blurred_dense_masked.png'
 	import p1Offset from '../steps/p01-s03-blurred_voidest_offset.png'
-	import resultImage from '../steps/p05-s00-result.png'
+	import resultImageGrey from '../steps/p05-s00-result.png'
+	import resultImageHsv from '../steps/p05-s00-result-hsv.png'
 	import psdImage from '../steps/p05-s00-psd.png'
 	import logPsdImage from '../steps/p05-s00-log-psd.png'
 	import resultThresImage from '../steps/p05-s01-thresholded.png'
@@ -41,6 +42,7 @@
 
 	const p2Ranks = $derived(hsvScale.value ? p2RanksHsv : p2RanksGrey)
 	const p3Ranks = $derived(hsvScale.value ? p3RanksHsv : p3RanksGrey)
+	const resultImage = $derived(hsvScale.value ? resultImageHsv : resultImageGrey)
 
 	const size = $derived(recording.value.globals.height)
 	const pixelCount = $derived(recording.value.globals.width * recording.value.globals.height)
@@ -121,6 +123,7 @@
 							</svg>
 						</div>
 						<figcaption>
+							{@render scaleSwitch()}
 							<code>ranks</code>
 						</figcaption>
 					</figure>
@@ -171,14 +174,14 @@
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})'>
 					{#snippet marker()}
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
 					</svg>
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})'>
 					{#snippet marker()}
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
 					</svg>
 					{/snippet}
 				</PythonAssign>
@@ -218,7 +221,7 @@
 							<img src={p1Masked} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="magenta" />
+								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="magenta" />
 							</svg>
 						</div>
 						<figcaption>
@@ -233,7 +236,7 @@
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
-								<rect x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
 
 							</svg>
 						</div>
@@ -261,16 +264,17 @@
 					<PythonSkip skip={phase1If2}>
 						<PythonAssign left="placed_pixels[densest_coord]" right="False">
 							{#snippet marker()}
-							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="red" />
-							</svg> = False
+							 &nbsp;set <svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="red" />
+							</svg> to False
 							{/snippet}
 						</PythonAssign>
 						<PythonAssign left="placed_pixels[voidest_coord]" right="True">
 							{#snippet marker()}
+							&nbsp;set
 							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="green" />
-							</svg> = True
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="lightgreen" />
+							</svg> to True
 							{/snippet}
 						</PythonAssign>
 
@@ -285,9 +289,9 @@
 							<img src={p1PlacedAfter} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
+								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
 
-								<rect x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
+								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="lightgreen" />
 
 							</svg>
 						</div>
@@ -322,9 +326,10 @@
 				</PythonAssign>
 				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value}>
 					{#snippet marker()}
+					&nbsp;set
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
-					</svg> =
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+					</svg> to
 					{/snippet}
 				</PythonAssign>
 
@@ -364,7 +369,7 @@
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
-								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
 
 							</svg>
 						</div>
@@ -379,14 +384,13 @@
 							<img src={p2Ranks} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 
 							</svg>
 						</div>
 						<figcaption>
+							{@render scaleSwitch()}
 							<code>ranks</code>
-							<br>
-								<label><input type="checkbox" bind:checked={hsvScale.value} /> Rainbow</label>
 						</figcaption>
 					</figure>
 						</div>
@@ -405,12 +409,20 @@
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase3Voidest} />
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})' />
 				<br>
-				<PythonAssign left="placed_pixels[voidest_coord]" right="True" />
+				<PythonAssign left="placed_pixels[voidest_coord]" right="True">
+					{#snippet marker()}
+					&nbsp;set
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="lightgreen" />
+					</svg> to False
+					{/snippet}
+				</PythonAssign>
 				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank">
 					{#snippet marker()}
+					&nbsp;set
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
-					</svg> = {initialWhiteCount + phase3Focus.value}
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+					</svg> to {initialWhiteCount + phase3Focus.value}
 					{/snippet}
 				</PythonAssign>
 
@@ -446,7 +458,7 @@
 							<img src={p3blurredOffset} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="green" />
+								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="lightgreen" />
 							</svg>
 						</div>
 						<figcaption>
@@ -459,13 +471,12 @@
 							<img src={p3Ranks} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
 							</svg>
 						</div>
 						<figcaption>
+							{@render scaleSwitch()}
 							<code>ranks</code>
-							<br>
-								<label><input type="checkbox" bind:checked={hsvScale.value} /> Rainbow</label>
 						</figcaption>
 					</figure>
 						</div>
@@ -492,6 +503,7 @@
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
+							{@render scaleSwitch()}
 							<code>result</code>
 						</figcaption>
 					</figure>
@@ -523,10 +535,10 @@
 	</div>
 	<h2>Threshold</h2>
 	<div class="code-snippet">
-		result = blueNoise({size})<br>
-		spec = fftshift(fft2(result))<br>
-    	psd = np.abs(spec * np.conj(spec))<br>
-    	log_psd = np.log(psd)
+		threshold = result &ge; 0.9<br>
+		threshold_spec = fftshift(fft2(threshold))<br>
+    	threshold_psd = np.abs(threshold_spec * np.conj(threshold_spec))<br>
+    	threshold_log_psd = np.log(threshold_psd)
 
 		<div class="media-row">
 			<PythonIndented>
@@ -578,6 +590,13 @@
 	</footer>
 </section>
 
+{#snippet scaleSwitch()}
+<div class="switch">
+	<label class="switch-option" class:active={hsvScale.value==false}><input type="radio" value={false} bind:group={hsvScale.value} /> Grayscale</label>
+	<label class="switch-option" class:active={hsvScale.value==true}><input value={true} type="radio" bind:group={hsvScale.value} /> Rainbow</label>
+</div>
+{/snippet}
+
 <style>
 
 	figure {
@@ -624,8 +643,10 @@
 		outline: pink 2px solid;
 	}
 
-	rect {
+	.pixel-marker {
 		shape-rendering: crispEdges;
+		vector-effect: non-scaling-stroke;
+		stroke-width: 2px;
 	}
 
 	.unseekable {
@@ -677,6 +698,30 @@
 
 	:global(.python-skip) .media-row {
 		display: none;
+	}
+
+	.switch input {
+		display: none;
+	}
+
+	.switch {
+		display: flex;
+		justify-content: center;
+		gap: 1px;
+		font-size: 0.8em;
+	}
+
+	.switch-option {
+		color: #fff;
+		padding: 0.1em 0.6em;
+		cursor: pointer;
+		color: #aaa;
+	}
+
+
+	.switch-option.active {
+		background: gray;
+		color: #b0e2f5;
 	}
 
 	.media-row {

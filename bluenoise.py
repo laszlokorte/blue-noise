@@ -93,11 +93,11 @@ class FileLogger:
         filename = f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}.png"
 
         if self.current_iteration is None:
-            self.buffered_images.append((filename, np.pad(array, 2) if array.ndim==2 else array))
+            self.buffered_images.append((filename, np.pad(array, 2) if array.ndim==2 else np.pad(array, [(2,2),(2,2),(0,0)])))
         else:
             if filename not in self.buffered_image_sequences:
                 self.buffered_image_sequences[filename] = []
-            self.buffered_image_sequences[filename].append(np.pad(array, 2) if array.ndim==2 else array)
+            self.buffered_image_sequences[filename].append(np.pad(array, 2) if array.ndim==2 else np.pad(array, [(2,2),(2,2),(0,0)]))
 
 
     def log_value(self, name, value):
@@ -349,6 +349,7 @@ def example_plot(size, logger):
 
 
     logger.log_image('result', space)
+    logger.log_image('result-hsv', color_scale(space))
     spec = fftshift(fft2(space))
     psd = np.abs(spec*np.conj(spec))
     log_psd = np.log(psd+eps)
@@ -377,7 +378,7 @@ def example_plot(size, logger):
     plt.imshow(log_psd, vmin=0,cmap="grey")
 
     logger.set_step(1)
-    thres = space < 0.9
+    thres = space >= 0.9
     thres_spec = fftshift(fft2(thres))
     thres_psd = np.abs(thres_spec*np.conj(thres_spec))
     log_thres_psd = np.log(thres_psd+eps)
