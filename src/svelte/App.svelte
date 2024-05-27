@@ -27,15 +27,20 @@
 	import p2PlacedBefore from '../steps/p02-s01-before-remove.png'
 	import p2Blurred from '../steps/p02-s01-blurred.png'
 	import p2Masked from '../steps/p02-s01-blurred_dense_masked.png'
-	import p2Ranks from '../steps/p02-s01-after-ranks.png'
+	import p2RanksGrey from '../steps/p02-s01-after-ranks.png'
+	import p2RanksHsv from '../steps/p02-s01-after-ranks-hsv.png'
 	import p3placed from '../steps/p03-s01-before-new.png'
 	import p3blurred from '../steps/p03-s01-blurred.png'
 	import p3blurredOffset from '../steps/p03-s01-blurred_voidest_offset.png'
-	import p3ranks from '../steps/p03-s01-after-ranks.png'
+	import p3RanksGrey from '../steps/p03-s01-after-ranks.png'
+	import p3RanksHsv from '../steps/p03-s01-after-ranks-hsv.png'
 
 	const recording = atom(rec);
 	const focus = atom({});
+	const hsvScale = atom(true);
 
+	const p2Ranks = $derived(hsvScale.value ? p2RanksHsv : p2RanksGrey)
+	const p3Ranks = $derived(hsvScale.value ? p3RanksHsv : p3RanksGrey)
 
 	const size = $derived(recording.value.globals.height)
 	const pixelCount = $derived(recording.value.globals.width * recording.value.globals.height)
@@ -84,6 +89,7 @@
 		</h1>
 
 		<p>Some Intro text</p>
+
 	</header>
 
 
@@ -335,6 +341,7 @@
 						</div>
 						<figcaption>
 							<code>not_ranked</code>
+
 						</figcaption>
 					</figure>
 							<figure>
@@ -378,6 +385,8 @@
 						</div>
 						<figcaption>
 							<code>ranks</code>
+							<br>
+								<label><input type="checkbox" bind:checked={hsvScale.value} /> Rainbow</label>
 						</figcaption>
 					</figure>
 						</div>
@@ -447,7 +456,7 @@
 							<figure>
 						<div class="stack">
 							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
-							<img src={p3ranks} alt="" class="stacked-sprite-image" />
+							<img src={p3Ranks} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 								<rect x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
@@ -455,6 +464,8 @@
 						</div>
 						<figcaption>
 							<code>ranks</code>
+							<br>
+								<label><input type="checkbox" bind:checked={hsvScale.value} /> Rainbow</label>
 						</figcaption>
 					</figure>
 						</div>

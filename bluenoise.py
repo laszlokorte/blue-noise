@@ -4,6 +4,7 @@ import json
 
 import numpy as np
 import skimage.filters as skfilter
+from skimage.color import hsv2rgb
 from PIL import Image
 import matplotlib.pyplot as plt
 from scipy.fft import fft2, fftshift
@@ -48,6 +49,9 @@ class NoopLogger:
     def write_frames(self, filename):
         """Do Nothing"""
 
+def color_scale(gray):
+    return hsv2rgb(np.dstack([gray, np.ones_like(gray)*1,gray>0]))
+
 
 class FileLogger:
     """Logger"""
@@ -89,11 +93,11 @@ class FileLogger:
         filename = f"p{self.current_phase:02d}-s{self.current_step:02d}-{name}.png"
 
         if self.current_iteration is None:
-            self.buffered_images.append((filename, np.pad(array, 2)))
+            self.buffered_images.append((filename, np.pad(array, 2) if array.ndim==2 else array))
         else:
             if filename not in self.buffered_image_sequences:
                 self.buffered_image_sequences[filename] = []
-            self.buffered_image_sequences[filename].append(np.pad(array, 2))
+            self.buffered_image_sequences[filename].append(np.pad(array, 2) if array.ndim==2 else array)
 
 
     def log_value(self, name, value):
@@ -279,6 +283,7 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
         ranks[densest_coord] = rank
         logger.log_image("after-remove", phase2)
         logger.log_image("after-ranks", ranks/ranks.size)
+        logger.log_image("after-ranks-hsv", color_scale(ranks/ranks.size))
         logger.log_value("densest", int(densest))
     logger.stop_iteration()
 
@@ -307,6 +312,7 @@ def bluenoise(size, sigma=2, seed = 23, initial_ratio = 0.1,
         ranks[voidest_coord] = count_white + rank
         logger.log_image("after-new", phase3)
         logger.log_image("after-ranks", ranks/ranks.size)
+        logger.log_image("after-ranks-hsv", color_scale(ranks/ranks.size))
         logger.log_value("voidest", int(voidest))
 
     logger.stop_iteration()
@@ -377,9 +383,9 @@ def example_plot(size, logger):
     log_thres_psd = np.log(thres_psd+eps)
     log_thres_psd[size//2,size//2] = 0 # set DC frequency to 0
     thres_psd[size//2,size//2] = 0 # set DC frequency to 0
-    logger.log_image('tresholded', thres)
-    logger.log_image('tresholded-psd', rescale(thres_psd))
-    logger.log_image('tresholded-log-psd', rescale(log_thres_psd))
+    logger.log_image('thresholded', thres)
+    logger.log_image('thresholded-psd', rescale(thres_psd))
+    logger.log_image('thresholded-log-psd', rescale(log_thres_psd))
 
     plt.subplot(334)
     plt.title("Thresholded")
@@ -416,4 +422,4 @@ def example_plot(size, logger):
 
 
 if __name__ == "__main__":
-    example_plot(32, NoopLogger())
+    example_plot(32, FileLogger('.'))
