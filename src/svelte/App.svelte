@@ -690,7 +690,7 @@
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>result</code>
+							<code>threshold</code>
 						</figcaption>
 					</figure>
 
@@ -700,7 +700,7 @@
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>psd</code>
+							<code>threshold_psd</code>
 						</figcaption>
 					</figure>
 
@@ -710,7 +710,7 @@
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
 						</div>
 						<figcaption>
-							<code>log_psd</code>
+							<code>threshold_log_psd</code>
 						</figcaption>
 					</figure>
 				</div>
@@ -727,7 +727,6 @@
 		<li><a target="_blank" href="https://dl.acm.org/doi/10.1145/127719.122736">Mitchell's Best Candidate Algorithm</a></li>
 		<li><a target="_blank" href="https://ieeexplore.ieee.org/document/3288/">Dithering with blue noise</a></li>
 		<li><a target="_blank" href="https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/">Generating Blue Noise Sample Points With Mitchell’s Best Candidate Algorithm</a></li>
-		<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
 		<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
 		<li><a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">Mitchell's Best Candidate Algorithm</a></li>
 	</ul>

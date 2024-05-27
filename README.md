@@ -24,6 +24,5 @@ The algorithm below is implemented in python using numpy. In this regard it can 
 	<li><a target="_blank" href="https://ieeexplore.ieee.org/document/3288/">Dithering with blue noise</a></li>
 	<li><a target="_blank" href="https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/">Generating Blue Noise Sample Points With Mitchell’s Best Candidate Algorithm</a></li>
 	<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
-	<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
 	<li><a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">Mitchell's Best Candidate Algorithm</a></li>
 </ul>
