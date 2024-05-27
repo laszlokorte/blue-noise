@@ -39,6 +39,12 @@
 	const recording = atom(rec);
 	const focus = atom({});
 	const hsvScale = atom(true);
+	const markerColors = atom({})
+
+	const densestColor = view(['densestColor', L.valueOr('magenta')], markerColors)
+	const voidestColor = view(['voidestColor', L.valueOr('cyan')], markerColors)
+	const rankColor = view(['rankColor', L.valueOr('orange')], markerColors)
+
 
 	const p2Ranks = $derived(hsvScale.value ? p2RanksHsv : p2RanksGrey)
 	const p3Ranks = $derived(hsvScale.value ? p3RanksHsv : p3RanksGrey)
@@ -68,6 +74,10 @@
 
 	const phase1DensestCoord = $derived(unravel(phase1Densest, recording.value.globals.width, recording.value.globals.height))
 	const phase1VoidestCoord = $derived(unravel(phase1Voidest, recording.value.globals.width, recording.value.globals.height))
+	const phase1Direction = $derived({x: phase1VoidestCoord.x - phase1DensestCoord.x, y: phase1VoidestCoord.y - phase1DensestCoord.y})
+	const phase1DirectionCenter = $derived({x: (phase1VoidestCoord.x + phase1DensestCoord.x)/2, y: (phase1VoidestCoord.y + phase1DensestCoord.y)/2})
+	const phase1DirectionLength = $derived(Math.sqrt(phase1Direction.x*phase1Direction.x + phase1Direction.y*phase1Direction.y))
+	const phase1DirectionNormed = $derived({x: phase1Direction.x/phase1DirectionLength, y: phase1Direction.y/phase1DirectionLength})
 
 	const phase2Densest = $derived(recording.value.phases["2"].iterations['densest'][phase2Focus.value])
 	const phase3Voidest = $derived(recording.value.phases["3"].iterations['voidest'][phase3Focus.value])
@@ -90,7 +100,97 @@
 			<img src={favicon} class="icon" alt="Icon" />Generate Blue Noise
 		</h1>
 
-		<p>Some Intro text</p>
+		<p>
+			This is an interactive demonstration of the <a target="_blank" href="https://ieeexplore.ieee.org/document/3288/">Void and Cluster</a> algorithm for generating blue noise. <a target="_blank" href="http://momentsingraphics.de/BlueNoise.html">There are</a> already <a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">plenty of</a> excellent explorations on <a target="_blank" href="https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster/">how</a> <a target="_blank" href="https://www.youtube.com/watch?v=tethAU66xaA">and why</a> to generate <a target="_blank" href="https://en.wikipedia.org/wiki/Colors_of_noise">blue noise</a>, <a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">and noises of other color</a>. The <em>Void and Cluster</em> algorithm is one of <a target="_blank" href="https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/">several promiment algorithms</a>. <a target="_blank" href="https://blog.demofox.org/2018/08/12/not-all-blue-noise-is-created-equal/">Some advantages</a> over other algorithms are that the blue noise is of very good quality and that only the first step in the algorithm is non-deterministic.
+		</p>
+
+		<h3>This page</h3>
+
+		<p>
+			The goal of this page is to provide additional insight by visualizing the core idea of this algorithm.
+		</p>
+		<p>
+			This insight might be used to better unstand the algorithm itself, for example to recognize potential performance improvements. But it might also be used as source of inspiration on how to design a custom algorithm.
+		</p>
+		<p>
+			The algorithm below is implemented in python using numpy. In this regard it can also be used as a case-study on sophisticated algorithms that <a target="_blank" href="https://github.com/Atrix256/VoidAndCluster/blob/master/generatebn_void_cluster.cpp">take multiple hundred lines in C++</a> can be written succinctly when relying on higher levels.
+		</p>
+
+		<h3>Blue Noise</h3>
+
+		<p>A sequence of random numbers is called <em>blue noise</em> if succeeding numbers are very likely to be very different. This is in contrast to white noise, where each number would be completely unrelated to each other number in the squence. In a white noise sequency it would neither be supprising of the similar numbers occure next to each other, nor would it be supprising if two succeeding numbers are quite far appart. In blue noise neighbors are expected to be different. The opposite would be red noise, where neighboring values are expected to be at least similar.</p>
+
+		<p>
+			The characteristing check if a sequence is <em>blue noise</em> is to compute its <a target="_blank" href="https://en.wikipedia.org/wiki/Spectral_density#Power_spectral_density">Power spectral density</a> (the magnitude-square of its Fourier Transform) and check that it contains only high frequencies.
+		</p>
+
+		<h3>The algorithm</h3>
+
+		<p>
+			When generating 2D blue noise, as in the example below, the goal is to assign each pixel in the image a distinct intensity value, in such a way that the difference between intensity values of neighboring pixels gets maximized.
+		</p>
+
+		<p>
+			Read the code below and drag the sliders above the <code>for</code> and <code>while</code> loops to inspect the intermediate results.
+		</p>
+
+		<p>
+			The <code>rank</code> image is better viewed on a rainbow scale to make the low intensity more visible.
+		</p>
+
+		<details>
+			<summary>&hellip;or read the natural language explanation</summary>
+
+			<p>The algorithm consists of multiple phases. </p>
+		<ol>
+			<li>
+				<p><strong>Initilization</strong> (the only non-deterministic step, because of the <code>random()</code> call):</p>
+				<ul>
+					<li>Allocate an all-zero output image (<code>ranks</code>)</li>
+					<li>Generate white noise (<code>initial_white_noise</code>)</li>
+					<li>Threshold the white noise to select a random subset (~10%) of pixels, as binary image (<code>placed_pixels </code>)</li>
+				</ul>
+			</li>
+			<li>
+				<strong>Phase1: Spreading</strong>
+				<p>
+					The randomly <code>placed_pixels</code> might be clustered in some areas and sparse in some other areas. This a because a un-correlated(white noise) random generator is used. To spread the pixels more evenly:
+				</p>
+				<ul>
+					<li>Blur the <code>placed_pixels</code> with a gaussian filter to estimate the density across the image</li>
+					<li>Move a <code>placed_pixel</code> from the highest densesity area to the most void empty position</li>
+					<li>&hellip;repeat until dense and void areas converge</li>
+				</ul>
+			</li>
+			<li>
+				<strong>Phase 2: Assign distinct intensities to pixels</strong>
+				<p>
+					The random subset of <code>placed_pixels</code> is now spread as far as possible across the image.
+					<br>Next we assign each of them a distinct intensity value (starting at 0) by iterating through the set in descending order:
+				</p>
+				<ul>
+					<li>Blur the <code>placed_pixels</code></li>
+					<li>Select the pixel with highest density</li>
+					<li>Assign a new intensity value to this pixel</li>
+					<li>Repeat until each pixel in <code>placed_pixels</code> has been processed</li>
+				</ul>
+			</li>
+			<li>
+				<strong>Phase 3: Add remaining pixels</strong>
+				<p>
+					Up until now only a subset of the pixels (~10%) have been processed. To generate the remaining 90% of pixels:
+				</p>
+				<ul>
+					<li>Blur the <code>placed_pixels</code></li>
+					<li>Select the empty pixel with lowest density</li>
+					<li>Add this pixel to the <code>placed_pixels</code></li>
+					<li>Assign this pixel the next available intensity (<code>rank</code>) value in the output image</li>
+					<li>&hellip;repeat until no more pixels left.</li>
+				</ul>
+			</li>
+		</ol>
+			
+		</details>
 
 	</header>
 
@@ -174,14 +274,14 @@
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})'>
 					{#snippet marker()}
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="magenta" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 					</svg>
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})'>
 					{#snippet marker()}
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="cyan" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
 					</svg>
 					{/snippet}
 				</PythonAssign>
@@ -221,7 +321,7 @@
 							<img src={p1Masked} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="magenta" />
+								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 							</svg>
 						</div>
 						<figcaption>
@@ -236,7 +336,7 @@
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
-								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
 
 							</svg>
 						</div>
@@ -265,7 +365,7 @@
 						<PythonAssign left="placed_pixels[densest_coord]" right="False">
 							{#snippet marker()}
 							 &nbsp;set <svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="red" />
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 							</svg> to False
 							{/snippet}
 						</PythonAssign>
@@ -273,7 +373,7 @@
 							{#snippet marker()}
 							&nbsp;set
 							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="lightgreen" />
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
 							</svg> to True
 							{/snippet}
 						</PythonAssign>
@@ -289,10 +389,13 @@
 							<img src={p1PlacedAfter} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="red" />
+								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 
-								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="lightgreen" />
 
+								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
+
+
+								<path d="M{phase1DensestCoord.x+0.5} {phase1DensestCoord.y+0.5} Q {phase1DirectionCenter.x+phase1DirectionNormed.y*5} {phase1DirectionCenter.y-phase1DirectionNormed.x*5} {phase1VoidestCoord.x+0.5} {phase1VoidestCoord.y+0.5}" stroke={"pink"} stroke-width="3px" vector-effect="non-scaling-stroke" fill="none" />
 							</svg>
 						</div>
 						<figcaption>
@@ -320,15 +423,28 @@
 
 				<PythonAssign left="blurred" right="gaussian(not_ranked, sigma)" />
 				<PythonAssign left="densest" right="(blurred * not_ranked).argmax()" currentValue={phase2Densest} />
-				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})' />
+				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})'>
+					{#snippet marker()}
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
+					</svg>
+					{/snippet}
+				</PythonAssign>
 				<br>
 				<PythonAssign left="not_ranked[densest_coord]" right="False">
+
+					{#snippet marker()}
+					&nbsp;set
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
+					</svg> to False
+					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value}>
 					{#snippet marker()}
 					&nbsp;set
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={rankColor.value} />
 					</svg> to
 					{/snippet}
 				</PythonAssign>
@@ -369,7 +485,7 @@
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
 
-								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="cyan" />
+								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 
 							</svg>
 						</div>
@@ -384,7 +500,7 @@
 							<img src={p2Ranks} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={rankColor.value} />
 
 							</svg>
 						</div>
@@ -407,21 +523,28 @@
 
 				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase3Voidest} />
-				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})' />
+				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})'>
+
+					{#snippet marker()}
+					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
+					</svg> =
+					{/snippet}
+				</PythonAssign>
 				<br>
 				<PythonAssign left="placed_pixels[voidest_coord]" right="True">
 					{#snippet marker()}
 					&nbsp;set
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="lightgreen" />
-					</svg> to False
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
+					</svg> to True
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank">
 					{#snippet marker()}
 					&nbsp;set
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke="orange" />
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={rankColor.value} />
 					</svg> to {initialWhiteCount + phase3Focus.value}
 					{/snippet}
 				</PythonAssign>
@@ -458,7 +581,7 @@
 							<img src={p3blurredOffset} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="lightgreen" />
+								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
 							</svg>
 						</div>
 						<figcaption>
@@ -471,7 +594,7 @@
 							<img src={p3Ranks} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke="orange" />
+								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={rankColor.value} />
 							</svg>
 						</div>
 						<figcaption>
@@ -488,6 +611,14 @@
 		<br>
 	</div>
 	<h2>Results</h2>
+
+	<p>
+		The resulting image has a the intensity values evenly spread across in space. Everywhere in the image are both dark and light pixels.
+	</p>
+	<p>
+		The verify the characteristic <a target="_blank" href="https://en.wikipedia.org/wiki/Spectral_density#Power_spectral_density">Power spectral density</a> we can compute the fourier transform and observe the dark spot around the the low frequencies:
+	</p>
+
 	<div class="code-snippet">
 		result = blueNoise({size})<br>
 		spec = fftshift(fft2(result))<br>
@@ -533,7 +664,17 @@
 			</PythonIndented>
 		</div>
 	</div>
+	
 	<h2>Threshold</h2>
+
+	<p>
+		Depending on the quality of the blue noise the image might processed even further while maintaining the blue noise property. Below the resulting image is thresholded to generate a new binary image of evenly distributed white spots. This is basically a similar image as the intermediate result of phase 1 (10% of white pixels evenly spaced).
+	</p>
+
+	<p>
+		When inspecting the power spectral density we can also observe the dark spot at the low frequencies. <a target="_blank" href="https://blog.demofox.org/2018/08/12/not-all-blue-noise-is-created-equal/">This is not always the case when post-processing a blue noise signal.</a>
+	</p>
+
 	<div class="code-snippet">
 		threshold = result &ge; 0.9<br>
 		threshold_spec = fftshift(fft2(threshold))<br>
@@ -580,11 +721,19 @@
 	<h2>References</h2>
 
 	<ul>
-		<li>Foo</li>
+		<li><a target="_blank" href="https://blog.demofox.org/2018/08/12/not-all-blue-noise-is-created-equal/">Not All Blue Noise is Created Equal</a></li>
+		<li><a target="_blank" href="https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster/">Generating Blue Noise Textures With Void And Cluster</a></li>
+		<li><a target="_blank" href="http://momentsingraphics.de/BlueNoise.html">Free blue noise textures</a></li>
+		<li><a target="_blank" href="https://dl.acm.org/doi/10.1145/127719.122736">Mitchell's Best Candidate Algorithm</a></li>
+		<li><a target="_blank" href="https://ieeexplore.ieee.org/document/3288/">Dithering with blue noise</a></li>
+		<li><a target="_blank" href="https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/">Generating Blue Noise Sample Points With Mitchell’s Best Candidate Algorithm</a></li>
+		<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
+		<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
+		<li><a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">Mitchell's Best Candidate Algorithm</a></li>
 	</ul>
 
 	<footer>
-		<a href="https://tools.laszlokorte.de" title="More educational tools"
+		<a target="_blank" href="https://tools.laszlokorte.de" title="More educational tools"
 			>More educational tools</a
 		>
 	</footer>
@@ -611,9 +760,14 @@
 	}
 	.stack {
 		display: grid;
-		grid-template-columns: max-content;
-		grid-template-rows: max-content;
+		grid-template-columns: 100%;
+		grid-template-rows: 100%;
 		border: 1px solid gray;
+		box-sizing: content-box;
+		max-width: 192px;
+		max-height: 192px;
+		overflow: hidden;
+		aspect-ratio: 1;
 	}
 
 	.stack :global(> *) {
@@ -625,18 +779,44 @@
 	.stacked-video {
 		width: 100%;
 		height: 100%;
-		max-width: 12em;
-		max-height: 12em;
+		max-width: 100%;
+		max-height: 100%;
 		display: block;
 	}
 
 	.stacked-image {
 		width: 100%;
 		height: 100%;
-		max-width: 12em;
-		max-height: 12em;
+		max-width: 100%;
+		max-height: 100%;
 		display: block;
 		image-rendering: pixelated;
+	}
+
+	.stacked-svg {
+		pointer-events: none;
+		width: 100%;
+		height: 100%;
+		max-width: 100%;
+		max-height: 100%;
+		display: block;
+	}
+
+	.stacked-sprite {
+		pointer-events: none;
+		width: 100%;
+		height: 100%;
+		max-width: 100%;
+		max-height: 100%;
+		display: grid;
+		overflow: hidden;
+	}
+
+	.stacked-sprite-image {
+		width: 100%;
+		image-rendering: pixelated;
+		image-rendering: crisp-edges;
+		display: block;
 	}
 
 	.seeking {
@@ -653,30 +833,7 @@
 		opacity: 0.2;
 	}
 
-	.stacked-svg {
-		pointer-events: none;
-		width: 100%;
-		height: 100%;
-		max-width: 12em;
-		max-height: 12em;
-		display: block;
-	}
 
-	.stacked-sprite {
-		pointer-events: none;
-		width: 100%;
-		height: 100%;
-		max-width: 12em;
-		max-height: 12em;
-		display: grid;
-		overflow: hidden;
-	}
-
-	.stacked-sprite-image {
-		width: 100%;
-		image-rendering: pixelated;
-		display: block;
-	}
 
 	.stacked-sprite-image {
 		margin-top: calc(-100% * var(--sprite-index,0 ));
@@ -781,7 +938,7 @@
 
 	section {
 		margin: 0 auto 3em;
-		max-width: 65em;
+		max-width: 80em;
 		font-family: monospace;
 	}
 
@@ -856,9 +1013,8 @@
 	}
 
 	ul {
-		list-style: none;
 		padding: 0;
-		margin: 0;
+		margin: 0.5em 0;
 		display: flex;
 		gap: 0.5em;
 		flex-direction: column;
@@ -941,5 +1097,12 @@
 
 	.button-bar-intro {
 		padding-right: 0.5em;
+	}
+
+	p code, li code {
+		background: #333;
+		color: #fff;
+		display: inline-block;
+		padding: 1px 2px;
 	}
 </style>
