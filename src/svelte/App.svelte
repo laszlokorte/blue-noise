@@ -103,6 +103,10 @@
 		</h1>
 
 		<p>
+			<a href="https://www.youtube.com/watch?v=ORsTjpy5CH8" target="_blank">Video Demo</a>
+		</p>
+
+		<p>
 			This is an interactive demonstration of the <a target="_blank" href="https://ieeexplore.ieee.org/document/3288/">Void and Cluster</a> algorithm for generating blue noise. <a target="_blank" href="http://momentsingraphics.de/BlueNoise.html">There are</a> already <a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">plenty of</a> excellent explorations on <a target="_blank" href="https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster/">how</a> <a target="_blank" href="https://www.youtube.com/watch?v=tethAU66xaA">and why</a> to generate <a target="_blank" href="https://en.wikipedia.org/wiki/Colors_of_noise">blue noise</a>, <a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">and noises of other color</a>. The <em>Void and Cluster</em> algorithm is one of <a target="_blank" href="https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/">several promiment algorithms</a>. <a target="_blank" href="https://blog.demofox.org/2018/08/12/not-all-blue-noise-is-created-equal/">Some advantages</a> over other algorithms are that the blue noise is of very good quality and that only the first step in the algorithm is non-deterministic.
 		</p>
 

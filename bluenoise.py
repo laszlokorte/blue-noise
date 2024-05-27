@@ -97,7 +97,9 @@ class FileLogger:
         else:
             if filename not in self.buffered_image_sequences:
                 self.buffered_image_sequences[filename] = []
-            self.buffered_image_sequences[filename].append(np.pad(array, 2) if array.ndim==2 else np.pad(array, [(2,2),(2,2),(0,0)]))
+
+            if self.current_iteration > len(self.buffered_image_sequences[filename]):
+                self.buffered_image_sequences[filename].append(np.pad(array, 2) if array.ndim==2 else np.pad(array, [(2,2),(2,2),(0,0)]))
 
 
     def log_value(self, name, value):
