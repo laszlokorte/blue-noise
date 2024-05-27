@@ -41,9 +41,11 @@
 	const hsvScale = atom(true);
 	const markerColors = atom({})
 
-	const densestColor = view(['densestColor', L.valueOr('magenta')], markerColors)
-	const voidestColor = view(['voidestColor', L.valueOr('cyan')], markerColors)
-	const rankColor = view(['rankColor', L.valueOr('orange')], markerColors)
+	const densestColor = view(['densestColor', L.valueOr('#ff00ff')], markerColors)
+	const voidestColor = view(['voidestColor', L.valueOr('#00ffff')], markerColors)
+	const removeColor = view(['removeColor', L.valueOr('#ff7777')], markerColors)
+	const addColor = view(['addColor', L.valueOr('#aaffaa')], markerColors)
+	const rankColor = view(['rankColor', L.valueOr('#ffaa00')], markerColors)
 
 
 	const p2Ranks = $derived(hsvScale.value ? p2RanksHsv : p2RanksGrey)
@@ -113,21 +115,21 @@
 			This insight might be used to better unstand the algorithm itself, for example to recognize potential performance improvements. But it might also be used as source of inspiration on how to design a custom algorithm.
 		</p>
 		<p>
-			The algorithm below is implemented in python using numpy. In this regard it can also be used as a case-study on sophisticated algorithms that <a target="_blank" href="https://github.com/Atrix256/VoidAndCluster/blob/master/generatebn_void_cluster.cpp">take multiple hundred lines in C++</a> can be written succinctly when relying on higher levels.
+			The algorithm below is implemented in python using numpy. In this regard it can also be used as a case-study on how a sophisticated algorithm (that may <a target="_blank" href="https://github.com/Atrix256/VoidAndCluster/blob/master/generatebn_void_cluster.cpp">take multiple hundred lines in C++</a>) can be written very succinctly when relying on higher level concepts, such as convolution and rank-polymorphism.
 		</p>
 
 		<h3>Blue Noise</h3>
 
-		<p>A sequence of random numbers is called <em>blue noise</em> if succeeding numbers are very likely to be very different. This is in contrast to white noise, where each number would be completely unrelated to each other number in the squence. In a white noise sequency it would neither be supprising of the similar numbers occure next to each other, nor would it be supprising if two succeeding numbers are quite far appart. In blue noise neighbors are expected to be different. The opposite would be red noise, where neighboring values are expected to be at least similar.</p>
+		<p>A sequence of random numbers is called <em>blue noise</em> if succeeding numbers are very likely to be very different. This is in contrast to white noise, where each number would be completely unrelated to each other number in the squence. In a white noise sequency it would neither be supprising for the similar numbers occur right next to each other, nor would it be supprising for two succeeding values to be quite far appart. In blue noise neighbors are expected to be different. The opposite would be red noise, where neighboring values are expected to be at least similar.</p>
 
 		<p>
-			The characteristing check if a sequence is <em>blue noise</em> is to compute its <a target="_blank" href="https://en.wikipedia.org/wiki/Spectral_density#Power_spectral_density">Power spectral density</a> (the magnitude-square of its Fourier Transform) and check that it contains only high frequencies.
+			The characteristic check if a sequence is <em>blue noise</em> is to compute its <a target="_blank" href="https://en.wikipedia.org/wiki/Spectral_density#Power_spectral_density">Power spectral density</a> (the magnitude-square of its Fourier Transform) and then to check that it contains only high frequencies.
 		</p>
 
 		<h3>The algorithm</h3>
 
 		<p>
-			When generating 2D blue noise, as in the example below, the goal is to assign each pixel in the image a distinct intensity value, in such a way that the difference between intensity values of neighboring pixels gets maximized.
+			When generating 2D blue noise, as in the example below, the goal is to assign each pixel in the image a distinct intensity value, such that the intensity difference of neighboring pixels gets maximized.
 		</p>
 
 		<p>
@@ -194,8 +196,17 @@
 
 	</header>
 
+	<div style:display="none">
+		<input type="color" id="input-densestColor" bind:value={densestColor.value} />
+		<input type="color" id="input-voidestColor" bind:value={voidestColor.value} />
+		<input type="color" id="input-removeColor" bind:value={removeColor.value} />
+		<input type="color" id="input-addColor" bind:value={addColor.value} />
+		<input type="color" id="input-rankColor" bind:value={rankColor.value} />
+	</div>
 
 	<div class="code-snippet">
+		<span class="python-kw">import</span> numpy <span class="python-kw">as</span> np<br>
+		<span class="python-kw">from</span> skimage.filters <span class="python-kw">import</span> gaussian<br><br>
 		<PythonDef name="blueNoise" params={['size','sigma=2.0','initial_ratio=0.1']}>
 
 			<PythonComment text="Init: Place some initial pixels based off thresholded white noise" />
@@ -273,16 +284,20 @@
 
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase1DensestCoord.x}, {phase1DensestCoord.y})'>
 					{#snippet marker()}
+					<label class="color-picker-label" for="input-densestColor">
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
 					</svg>
+					</label>
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase1VoidestCoord.x}, {phase1VoidestCoord.y})'>
 					{#snippet marker()}
+					<label class="color-picker-label" for="input-voidestColor">
 					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
 					</svg>
+					</label>
 					{/snippet}
 				</PythonAssign>
 
@@ -364,17 +379,17 @@
 					<PythonSkip skip={phase1If2}>
 						<PythonAssign left="placed_pixels[densest_coord]" right="False">
 							{#snippet marker()}
-							 &nbsp;set <svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
-							</svg> to False
+							 &nbsp;set <label class="color-picker-label" for="input-removeColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={removeColor.value} />
+							</svg></label> to False
 							{/snippet}
 						</PythonAssign>
 						<PythonAssign left="placed_pixels[voidest_coord]" right="True">
 							{#snippet marker()}
 							&nbsp;set
-							<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
-							</svg> to True
+							<label class="color-picker-label" for="input-addColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+								<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={addColor.value} />
+							</svg></label> to True
 							{/snippet}
 						</PythonAssign>
 
@@ -389,10 +404,10 @@
 							<img src={p1PlacedAfter} alt="" class="stacked-sprite-image" />
 							</div>
 							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
-								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={densestColor.value} />
+								<rect class="pixel-marker" x={phase1DensestCoord.x-1} y={phase1DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={removeColor.value} />
 
 
-								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
+								<rect class="pixel-marker" x={phase1VoidestCoord.x-1} y={phase1VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={addColor.value} />
 
 
 								<path d="M{phase1DensestCoord.x+0.5} {phase1DensestCoord.y+0.5} Q {phase1DirectionCenter.x+phase1DirectionNormed.y*5} {phase1DirectionCenter.y-phase1DirectionNormed.x*5} {phase1VoidestCoord.x+0.5} {phase1VoidestCoord.y+0.5}" stroke={"pink"} stroke-width="3px" vector-effect="non-scaling-stroke" fill="none" />
@@ -425,9 +440,9 @@
 				<PythonAssign left="densest" right="(blurred * not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})'>
 					{#snippet marker()}
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+					<label class="color-picker-label" for="input-densestColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
-					</svg>
+					</svg></label>
 					{/snippet}
 				</PythonAssign>
 				<br>
@@ -435,17 +450,17 @@
 
 					{#snippet marker()}
 					&nbsp;set
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={densestColor.value} />
-					</svg> to False
+					<label class="color-picker-label" for="input-removeColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={removeColor.value} />
+					</svg></label> to False
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="ranks[densest_coord]" right="rank" currentValue={phase2Rank.value}>
 					{#snippet marker()}
 					&nbsp;set
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+					<label class="color-picker-label" for="input-rankColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={rankColor.value} />
-					</svg> to
+					</svg></label> to
 					{/snippet}
 				</PythonAssign>
 
@@ -458,7 +473,11 @@
 							<div class="stacked-sprite" style:--sprite-index={phase2Focus.value}>
 							<img src={p2PlacedBefore} alt="" class="stacked-sprite-image" />
 							</div>
-							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								
+								<rect class="pixel-marker" x={phase2DensestCoord.x-1} y={phase2DensestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={removeColor.value} />
+
+							</svg>
 						</div>
 						<figcaption>
 							<code>not_ranked</code>
@@ -526,26 +545,26 @@
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})'>
 
 					{#snippet marker()}
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+					<label class="color-picker-label" for="input-voidestColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
-					</svg> =
+					</svg></label> =
 					{/snippet}
 				</PythonAssign>
 				<br>
 				<PythonAssign left="placed_pixels[voidest_coord]" right="True">
 					{#snippet marker()}
 					&nbsp;set
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
-						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={voidestColor.value} />
-					</svg> to True
+					<label class="color-picker-label" for="input-addColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={addColor.value} />
+					</svg></label> to True
 					{/snippet}
 				</PythonAssign>
 				<PythonAssign left="ranks[voidest_coord]" right="count_placed + rank">
 					{#snippet marker()}
 					&nbsp;set
-					<svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
+					<label class="color-picker-label" for="input-rankColor"><svg viewBox="-2 -2 5 5" style:width="1.3em" style:height="1.3em" style:vertical-align="top">
 						<rect class="pixel-marker" x={0} y={0} width="2" height="2" fill="none" stroke-width="0.5" stroke={rankColor.value} />
-					</svg> to {initialWhiteCount + phase3Focus.value}
+					</svg></label> to {initialWhiteCount + phase3Focus.value}
 					{/snippet}
 				</PythonAssign>
 
@@ -558,7 +577,11 @@
 							<div class="stacked-sprite" style:--sprite-index={phase3Focus.value}>
 							<img src={p3placed} alt="" class="stacked-sprite-image" />
 							</div>
-							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg"></svg>
+							<svg viewBox="-2 -2 {size+4} {size+4}" class="stacked-svg">
+								
+								<rect class="pixel-marker" x={phase3VoidestCoord.x-1} y={phase3VoidestCoord.y-1} width="3" height="3" fill="none" stroke-width="0.5" stroke={addColor.value} />
+
+							</svg>
 						</div>
 						<figcaption>
 							<code>placed_pixels</code>
@@ -1003,6 +1026,10 @@
 		color: #aa0000;
 		outline: #aa0000 3px solid;
 		background: #ffdddd;
+	}
+
+	.color-picker-label {
+		cursor: pointer;
 	}
 
 	.error-message {
