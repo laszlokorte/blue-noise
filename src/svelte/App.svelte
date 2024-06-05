@@ -103,7 +103,8 @@
 		</h1>
 
 		<p>
-			<a href="https://www.youtube.com/watch?v=ORsTjpy5CH8" target="_blank">Video Demo</a>
+			<a href="https://www.youtube.com/watch?v=ORsTjpy5CH8" target="_blank">Video Demo</a> | 
+			<a target="_blank" href="https://github.com/laszlokorte/bluenoise-notebook/blob/main/bluenoise.ipynb">Jupyter Notebook with further examples</a>
 		</p>
 
 		<p>
@@ -757,6 +758,7 @@
 		<li><a target="_blank" href="https://blog.demofox.org/2017/10/25/transmuting-white-noise-to-blue-red-green-purple/">Transmuting White Noise To Blue, Red, Green, Purple</a></li>
 		<li><a target="_blank" href="https://observablehq.com/@bensimonds/mitchells-best-candidate-algorithm">Mitchell's Best Candidate Algorithm</a></li>
 		<li><a target="_blank" href="http://momentsingraphics.de/3DBlueNoise.html">The problem with 3D blue noise</a></li>
+		<li><a target="_blank" href="https://github.com/laszlokorte/bluenoise-notebook/blob/main/bluenoise.ipynb">Jupyter Notebook with further examples</a></li>
 	</ul>
 
 	<footer>
