@@ -283,7 +283,7 @@
 				<PythonComment noselect text="prev_swap = ({phase1DensestPrev}, {phase1VoidestPrev})" />
 				{/if}
 
-				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
+				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma, mode='wrap')" />
 				<PythonAssign left="densest" right="(blurred * placed_pixels).argmax()" currentValue={phase1Densest} />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase1Voidest} />
 
@@ -441,7 +441,7 @@
 			<PythonLoop iter="rank" collection="range(count_placed, 0, -1)" iterations={maxPhase2Focus} focus={phase2Focus}>
 				<PythonComment noselect text="rank = {phase2Rank.value}" />
 
-				<PythonAssign left="blurred" right="gaussian(not_ranked, sigma)" />
+				<PythonAssign left="blurred" right="gaussian(not_ranked, sigma, mode='wrap')" />
 				<PythonAssign left="densest" right="(blurred * not_ranked).argmax()" currentValue={phase2Densest} />
 				<PythonAssign left="densest_coord" right="np.unravel_index(densest, shape)" currentValue='({phase2DensestCoord.x}, {phase2DensestCoord.y})'>
 					{#snippet marker()}
@@ -545,7 +545,7 @@
 			<PythonLoop iter="rank" collection="range(count_remaining)"  iterations={maxPhase3Focus} focus={phase3Focus}>
 				<PythonComment text="rank = {phase3Focus.value}" />
 
-				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma)" />
+				<PythonAssign left="blurred" right="gaussian(placed_pixels, sigma, mode='wrap')" />
 				<PythonAssign left="voidest" right="(blurred + placed_pixels).argmin()" currentValue={phase3Voidest} />
 				<PythonAssign left="voidest_coord" right="np.unravel_index(voidest, shape)" currentValue='({phase3VoidestCoord.x}, {phase3VoidestCoord.y})'>
 
