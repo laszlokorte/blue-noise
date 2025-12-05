@@ -319,8 +319,8 @@
             The opposite of
             <em style="padding: 1px; background:#cef">blue noise</em>
             would be
-            <em style="padding: 1px; background-color:#fce">rednoise</em>, where
-            neighboring values are <em>expected to be mostly similar</em>.
+            <em style="padding: 1px; background-color:#fce">red noise</em>,
+            where neighboring values are <em>expected to be mostly similar</em>.
         </p>
 
         <p>
