@@ -705,6 +705,11 @@
                                             alt=""
                                             class="stacked-sprite-image"
                                         />
+                                        <svg
+                                            viewBox="-2 -2 {size + 4} {size +
+                                                4}"
+                                            class="stacked-svg"
+                                        ></svg>
                                     </div>
                                     <svg
                                         viewBox="-2 -2 {size + 4} {size + 4}"
@@ -1319,6 +1324,11 @@
                                             alt=""
                                             class="stacked-sprite-image"
                                         />
+                                        <svg
+                                            viewBox="-2 -2 {size + 4} {size +
+                                                4}"
+                                            class="stacked-svg"
+                                        ></svg>
                                     </div>
                                     <svg
                                         viewBox="-2 -2 {size + 4} {size + 4}"
@@ -1664,9 +1674,6 @@
     figcaption {
         text-align: center;
     }
-    .bitmap {
-        image-rendering: pixelated;
-    }
     .stack {
         display: grid;
         grid-template-columns: 100%;
@@ -1683,14 +1690,6 @@
         grid-area: 1 / 1;
         align-self: stretch;
         justify-self: stretch;
-    }
-
-    .stacked-video {
-        width: 100%;
-        height: 100%;
-        max-width: 100%;
-        max-height: 100%;
-        display: block;
     }
 
     .stacked-image {
@@ -1728,32 +1727,25 @@
         display: block;
     }
 
-    .seeking {
-        outline: pink 2px solid;
-    }
-
     .pixel-marker {
         shape-rendering: crispEdges;
         vector-effect: non-scaling-stroke;
         stroke-width: 2px;
     }
 
-    .unseekable {
-        opacity: 0.2;
-    }
-
     .stacked-sprite-image {
         margin-top: calc(-100% * var(--sprite-index, 0));
     }
 
-    .svg {
-        width: 100%;
-        background: #eee;
-    }
-
     .row {
         display: flex;
+        flex-wrap: wrap;
         gap: 1em;
+    }
+    figure {
+        width: 100%;
+        flex-basis: 14em;
+        flex-shrink: 0;
     }
 
     .centered {
@@ -1813,16 +1805,6 @@
         user-select: none;
     }
 
-    summary > span {
-        text-decoration: underline;
-    }
-
-    hr {
-        background: none;
-        border: none;
-        border-top: 1px solid #333;
-    }
-
     footer {
         text-align: center;
         padding: 2em;
@@ -1863,63 +1845,8 @@
         color: #15218d;
     }
 
-    .code-template {
-        background: #15218d;
-        color: #fff;
-        padding: 1em;
-        font-size: 2em;
-        font-family: monospace;
-        display: grid;
-        grid-template-columns: auto auto auto;
-        justify-content: start;
-        align-items: baseline;
-    }
-
-    .code-template-start {
-        grid-column: 1;
-    }
-
-    .code-template-content {
-        grid-column: 2;
-    }
-
-    .code-template-end {
-        grid-column: 3;
-    }
-
-    .code-template-prompt {
-        grid-column: 2;
-        grid-row: 2;
-        text-align: center;
-        align-items: center;
-        font-size: 0.5em;
-        color: #cceeff;
-        user-select: none;
-    }
-
-    .code-placeholder {
-        min-width: 1em;
-        display: inline-block;
-        background: #cceeff;
-        color: #000;
-        padding: 0.2em 0.4em;
-        margin: 0.2em;
-    }
-
-    .syntax-error {
-        color: #aa0000;
-        outline: #aa0000 3px solid;
-        background: #ffdddd;
-    }
-
     .color-picker-label {
         cursor: pointer;
-    }
-
-    .error-message {
-        padding: 1em;
-        color: #aa0000;
-        background: #ffdddd;
     }
 
     ul {
@@ -1928,85 +1855,6 @@
         display: flex;
         gap: 0.5em;
         flex-direction: column;
-    }
-
-    pre {
-        white-space: pre-wrap;
-        background: #333;
-        color: #fff;
-        overflow: auto;
-        resize: vertical;
-        padding: 1em;
-        box-sizing: border-box;
-    }
-
-    textarea {
-        white-space: pre-wrap;
-        background: #ffffee;
-        color: #000;
-        width: 100%;
-        min-height: 10em;
-        border: 0;
-        resize: vertical;
-        padding: 1em;
-        box-sizing: border-box;
-    }
-
-    .number-picker {
-        display: flex;
-        align-items: center;
-        gap: 1em;
-    }
-
-    input[type="range"] {
-        padding: 1em;
-        margin: 0;
-    }
-
-    input[type="text"] {
-        margin: 0;
-    }
-
-    .phantom {
-        visibility: hidden;
-    }
-
-    .controls {
-        display: flex;
-        margin: 1em 0;
-    }
-
-    button {
-        border: none;
-        background: #2541ad;
-        color: #fff;
-        padding: 0.3em 0.5em;
-        display: inline-block;
-        font: inherit;
-        cursor: pointer;
-    }
-
-    button:hover {
-        background: #2562ad;
-    }
-
-    button:active {
-        background: #252aad;
-    }
-
-    button:focus-visible {
-        outline: 3px solid #4daace;
-    }
-
-    .button-bar {
-        display: flex;
-        gap: 0.2em;
-        margin: 4px 0;
-        align-items: baseline;
-    }
-
-    .button-bar-intro {
-        padding-right: 0.5em;
     }
 
     p code,
