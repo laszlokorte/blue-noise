@@ -197,7 +197,7 @@
     }
 </script>
 
-<section>
+<section style="padding: 1em;">
     <header>
         <h1>
             <img src={favicon} class="icon" alt="Icon" />Generate Blue Noise
@@ -1680,8 +1680,8 @@
         grid-template-rows: 100%;
         border: 1px solid gray;
         box-sizing: content-box;
-        max-width: 192px;
-        max-height: 192px;
+        width: 192px;
+        height: 192px;
         overflow: hidden;
         aspect-ratio: 1;
     }
@@ -1744,7 +1744,7 @@
     }
     figure {
         width: 100%;
-        flex-basis: 14em;
+        flex-basis: fit-content;
         flex-shrink: 0;
     }
 
